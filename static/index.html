@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="hy">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Էլեկտրոնային Օրագիր</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #eef2f5;
+        margin: 0;
+        padding: 20px;
+        color: #333;
+      }
+      .card {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin: 50px auto;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        width: 90%;
+        max-width: 400px;
+        text-align: center;
+      }
+      input,
+      select,
+      button {
+        margin: 8px 0;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 15px;
+        box-sizing: border-box;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+        transition: 0.2s;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        border: 1px solid #e0e0e0;
+        padding: 12px;
+        text-align: center;
+      }
+      th {
+        background: #007bff;
+        color: white;
+      }
+      .hidden {
+        display: none;
+      }
+      .header-flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+      }
+      .tab-btn {
+        background: #e0e0e0;
+        color: #333;
+        margin-right: 5px;
+        width: auto;
+        padding: 8px 16px;
+      }
+      .tab-btn.active {
+        background: #007bff;
+        color: white;
+      }
+      .filter-group {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Экран входа -->
+    <div id="login-screen" class="card">
+      <h2>Մուտք Համակարգ</h2>
+      <input
+        type="text"
+        id="username"
+        placeholder="Մուտքանուն (Username)"
+        style="width: 100%"
+      />
+      <input
+        type="password"
+        id="password"
+        placeholder="Գաղտնաբառ (Password)"
+        style="width: 100%"
+      />
+      <button onclick="login()" style="width: 100%">Մտնել</button>
+    </div>
+
+    <!-- Кабинет Учителя -->
+    <div id="teacher-screen" class="container hidden">
+      <div class="header-flex">
+        <h2 id="teacher-info" style="margin: 0"></h2>
+        <div>
+          <label>Ամսաթիվ: </label>
+          <input
+            type="date"
+            id="teacher-date"
+            style="width: auto"
+            onchange="loadTeacherData()"
+          />
+        </div>
+      </div>
+
+      <table id="grades-table">
+        <thead>
+          <tr>
+            <th>Ուսանող</th>
+            <th>1-ին դաս</th>
+            <th>2-րդ դաս</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <br />
+      <button onclick="saveGrades()" style="width: 200px">Պահպանել</button>
+    </div>
+
+    <!-- Кабинет Куратора -->
+    <div id="curator-screen" class="container hidden">
+      <div class="header-flex">
+        <h2 id="curator-info" style="margin: 0"></h2>
+        <span>Ռեժիմ: Կուրատոր</span>
+      </div>
+
+      <!-- Вкладки -->
+      <div>
+        <button
+          id="btn-tab-date"
+          class="tab-btn active"
+          onclick="switchCuratorTab('date')"
+        >
+          Ըստ Ամսաթվի
+        </button>
+        <button
+          id="btn-tab-student"
+          class="tab-btn"
+          onclick="switchCuratorTab('student')"
+        >
+          Ուսանողի Պատմություն
+        </button>
+      </div>
+
+      <!-- По датам -->
+      <div id="curator-tab-date" style="margin-top: 15px">
+        <div class="filter-group">
+          <label
+            >Ամսաթիվ:
+            <input type="date" id="curator-date" onchange="loadCuratorByDate()"
+          /></label>
+          <label
+            >Առարկա:
+            <select
+              id="curator-subject-select"
+              onchange="loadCuratorByDate()"
+              style="width: auto"
+            >
+              <option value="">Ընտրել առարկան</option>
+            </select>
+          </label>
+          <button onclick="loadCuratorByDate()" style="width: auto">
+            Ցուցադրել
+          </button>
+        </div>
+
+        <table id="curator-date-table">
+          <thead>
+            <tr>
+              <th>Ուսանող</th>
+              <th>1-ին դաս</th>
+              <th>2-րդ դաս</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- По студентам -->
+      <div id="curator-tab-student" class="hidden" style="margin-top: 15px">
+        <div class="filter-group">
+          <label
+            >Ընտրել Ուսանողին:
+            <select
+              id="curator-student-select"
+              onchange="loadCuratorStudentHistory()"
+              style="width: auto"
+            ></select>
+          </label>
+          <button onclick="loadCuratorStudentHistory()" style="width: auto">
+            Բեռնել Պատմությունը
+          </button>
+        </div>
+
+        <table id="curator-history-table">
+          <thead>
+            <tr>
+              <th>Ամսաթիվ</th>
+              <th>Առարկա</th>
+              <th>1-ին դաս</th>
+              <th>2-րդ դաս</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      let currentUser = null;
+      const gradesOptions = [
+        "—",
+        "Ն",
+        "Բ",
+        "10",
+        "9",
+        "8",
+        "7",
+        "6",
+        "5",
+        "4",
+        "3",
+        "2",
+        "1",
+      ];
+
+      document.getElementById("teacher-date").valueAsDate = new Date();
+      document.getElementById("curator-date").valueAsDate = new Date();
+
+      async function login() {
+        const userVal = document.getElementById("username").value;
+        const passVal = document.getElementById("password").value;
+
+        try {
+          const res = await fetch("/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: userVal, password: passVal }),
+          });
+
+          if (res.ok) {
+            currentUser = await res.json();
+            document.getElementById("login-screen").classList.add("hidden");
+
+            if (currentUser.is_curator) {
+              document
+                .getElementById("curator-screen")
+                .classList.remove("hidden");
+              document.getElementById("curator-info").innerText =
+                `${currentUser.full_name}`;
+              await initCuratorPanel();
+            } else {
+              document
+                .getElementById("teacher-screen")
+                .classList.remove("hidden");
+              document.getElementById("teacher-info").innerText =
+                `${currentUser.full_name} (${currentUser.subject})`;
+              loadTeacherData();
+            }
+          } else {
+            alert("Սխալ մուտքանուն կամ գաղտնաբառ:");
+          }
+        } catch (err) {
+          alert("Սերվերի հետ կապ չկա:");
+        }
+      }
+
+      async function loadTeacherData() {
+        const dateStr = document.getElementById("teacher-date").value;
+        const res = await fetch(
+          `/api/teacher_records?subject=${encodeURIComponent(currentUser.subject)}&date=${dateStr}`,
+        );
+        const records = await res.json();
+
+        const tbody = document.querySelector("#grades-table tbody");
+        tbody.innerHTML = "";
+
+        records.forEach((r) => {
+          const [s_id, name, l1, l2] = r;
+          const row = document.createElement("tr");
+          row.dataset.studentId = s_id;
+
+          row.innerHTML = `
+                    <td style="text-align: left; font-weight: bold;">${name}</td>
+                    <td>${createSelect(l1, 1)}</td>
+                    <td>${createSelect(l2, 2)}</td>
+                `;
+          tbody.appendChild(row);
+        });
+      }
+
+      function createSelect(selectedVal, lessonNum) {
+        let html = `<select class="lesson-${lessonNum}">`;
+        gradesOptions.forEach((opt) => {
+          const sel = opt === selectedVal ? "selected" : "";
+          html += `<option value="${opt}" ${sel}>${opt}</option>`;
+        });
+        html += "</select>";
+        return html;
+      }
+
+      async function saveGrades() {
+        const dateStr = document.getElementById("teacher-date").value;
+        const rows = document.querySelectorAll("#grades-table tbody tr");
+
+        for (let row of rows) {
+          const studentId = parseInt(row.dataset.studentId);
+          const val1 = row.querySelector(".lesson-1").value;
+          const val2 = row.querySelector(".lesson-2").value;
+
+          await fetch("/api/save_record", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              student_id: studentId,
+              subject: currentUser.subject,
+              date: dateStr,
+              lesson_num: 1,
+              value: val1,
+            }),
+          });
+
+          await fetch("/api/save_record", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              student_id: studentId,
+              subject: currentUser.subject,
+              date: dateStr,
+              lesson_num: 2,
+              value: val2,
+            }),
+          });
+        }
+        alert("Գնահատականները պահպանված են:");
+      }
+
+      async function initCuratorPanel() {
+        // Загрузка студентов
+        const resSt = await fetch("/api/students");
+        const students = await resSt.json();
+        const selectSt = document.getElementById("curator-student-select");
+        selectSt.innerHTML = "";
+
+        students.forEach((s) => {
+          const opt = document.createElement("option");
+          opt.value = s[0];
+          opt.innerText = s[1];
+          selectSt.appendChild(opt);
+        });
+
+        // Загрузка предметов прямо из SQLite
+        const resSub = await fetch("/api/subjects");
+        const subjects = await resSub.json();
+        const subjSelect = document.getElementById("curator-subject-select");
+        subjSelect.innerHTML = '<option value="">Ընտրել առարկան</option>';
+
+        subjects.forEach((sub) => {
+          const opt = document.createElement("option");
+          opt.value = sub;
+          opt.innerText = sub;
+          subjSelect.appendChild(opt);
+        });
+      }
+
+      function switchCuratorTab(tab) {
+        if (tab === "date") {
+          document
+            .getElementById("curator-tab-date")
+            .classList.remove("hidden");
+          document
+            .getElementById("curator-tab-student")
+            .classList.add("hidden");
+          document.getElementById("btn-tab-date").classList.add("active");
+          document.getElementById("btn-tab-student").classList.remove("active");
+        } else {
+          document.getElementById("curator-tab-date").classList.add("hidden");
+          document
+            .getElementById("curator-tab-student")
+            .classList.remove("hidden");
+          document.getElementById("btn-tab-date").classList.remove("active");
+          document.getElementById("btn-tab-student").classList.add("active");
+          loadCuratorStudentHistory();
+        }
+      }
+
+      async function loadCuratorByDate() {
+        const dateStr = document.getElementById("curator-date").value;
+        const subjectStr = document.getElementById(
+          "curator-subject-select",
+        ).value;
+
+        if (!subjectStr) {
+          document.querySelector("#curator-date-table tbody").innerHTML = "";
+          return;
+        }
+
+        const res = await fetch(
+          `/api/curator/by_date?date=${dateStr}&subject=${encodeURIComponent(subjectStr)}`,
+        );
+        const records = await res.json();
+
+        const tbody = document.querySelector("#curator-date-table tbody");
+        tbody.innerHTML = "";
+
+        if (records.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3">Տվյալներ չկան</td></tr>';
+          return;
+        }
+
+        records.forEach((r) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+                    <td style="text-align: left; font-weight: bold;">${r[0]}</td>
+                    <td>${r[1] || "—"}</td>
+                    <td>${r[2] || "—"}</td>
+                `;
+          tbody.appendChild(row);
+        });
+      }
+
+      async function loadCuratorStudentHistory() {
+        const studentId = document.getElementById(
+          "curator-student-select",
+        ).value;
+        if (!studentId) return;
+
+        const res = await fetch(`/api/curator/student_history/${studentId}`);
+        const history = await res.json();
+
+        const tbody = document.querySelector("#curator-history-table tbody");
+        tbody.innerHTML = "";
+
+        if (history.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4">Տվյալներ չկան</td></tr>';
+          return;
+        }
+
+        history.forEach((h) => {
+          // h = [date, subject, lesson1, lesson2]
+          const row = document.createElement("tr");
+          row.innerHTML = `
+                    <td>${h[0]}</td>
+                    <td>${h[1]}</td>
+                    <td>${h[2] || "—"}</td>
+                    <td>${h[3] || "—"}</td>
+                `;
+          tbody.appendChild(row);
+        });
+      }
+    </script>
+  </body>
+</html>
