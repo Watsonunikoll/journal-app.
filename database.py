@@ -40,15 +40,24 @@ def init_db():
         )
     ''')
 
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS lesson_topics (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            subject TEXT NOT NULL,
+            date TEXT NOT NULL,
+            lesson_num INTEGER NOT NULL,
+            topic TEXT NOT NULL,
+            UNIQUE(subject, date, lesson_num)
+        )
+    ''')
+
     cursor.execute("SELECT COUNT(*) FROM users")
     if cursor.fetchone()[0] == 0:
-        # Куратор
         cursor.execute('''
             INSERT INTO users (username, password, full_name, subject, is_curator)
             VALUES (?, ?, ?, ?, ?)
         ''', ("curator", hash_password("curator1234"), "Կուրատոր (Куратор)", "Համ. օպեր.", 1))
 
-        # Преподаватели
         teachers_def = [
             ("math", "Բարձր. մաթեմ.", "math7492"),
             ("market", "Մարքեթինգ", "market3184"),
@@ -69,7 +78,6 @@ def init_db():
                 VALUES (?, ?, ?, ?, 0)
             ''', (username, hash_password(default_pwd), full_title, subject_name))
 
-        # 19 учеников
         for i in range(1, 20):
             cursor.execute("INSERT INTO students (full_name) VALUES (?)", (f"Ուսանող {i}",))
 
@@ -91,7 +99,7 @@ def update_user_credentials(user_id, new_username, new_password):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     try:
-        if new_password.strip():
+        if new_password and new_password.strip():
             hashed = hash_password(new_password)
             cursor.execute("UPDATE users SET username = ?, password = ? WHERE id = ?", (new_username, hashed, user_id))
         else:
@@ -114,7 +122,6 @@ def get_all_students():
     conn.close()
     return students
 
-# Новая функция: получение списка реальных предметов из базы
 def get_all_subjects():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -141,53 +148,83 @@ def add_or_update_record(student_id, subject, date_str, lesson_num, value):
     conn.commit()
     conn.close()
 
-def get_teacher_records_for_date(subject, date_str):
+def get_teacher_records_for_date(subject, date_str, lesson1_num, lesson2_num):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT s.id, s.full_name,
+               MAX(CASE WHEN r.lesson_num = ? THEN r.value END) as l1,
+               MAX(CASE WHEN r.lesson_num = ? THEN r.value END) as l2
+        FROM students s
+        LEFT JOIN records r ON s.id = r.student_id AND r.date = ? AND r.subject = ?
+        GROUP BY s.id, s.full_name
+        ORDER BY s.id
+    ''', (lesson1_num, lesson2_num, date_str, subject))
+    data = cursor.fetchall()
+    conn.close()
+    return data
+
+def get_curator_grid_by_date(date_str, subject):
+    """Возвращает всех 19 студентов и их оценки по 8 урокам на выбранную дату."""
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute('''
         SELECT s.id, s.full_name,
                MAX(CASE WHEN r.lesson_num = 1 THEN r.value END) as l1,
-               MAX(CASE WHEN r.lesson_num = 2 THEN r.value END) as l2
+               MAX(CASE WHEN r.lesson_num = 2 THEN r.value END) as l2,
+               MAX(CASE WHEN r.lesson_num = 3 THEN r.value END) as l3,
+               MAX(CASE WHEN r.lesson_num = 4 THEN r.value END) as l4,
+               MAX(CASE WHEN r.lesson_num = 5 THEN r.value END) as l5,
+               MAX(CASE WHEN r.lesson_num = 6 THEN r.value END) as l6,
+               MAX(CASE WHEN r.lesson_num = 7 THEN r.value END) as l7,
+               MAX(CASE WHEN r.lesson_num = 8 THEN r.value END) as l8
         FROM students s
         LEFT JOIN records r ON s.id = r.student_id AND r.date = ? AND r.subject = ?
         GROUP BY s.id, s.full_name
+        ORDER BY s.id
     ''', (date_str, subject))
-    data = cursor.fetchall()
+    rows = cursor.fetchall()
     conn.close()
-    return data
 
-def get_records_by_date_and_subject(date_str, subject):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT s.full_name, 
-               MAX(CASE WHEN r.lesson_num = 1 THEN r.value END) as lesson1,
-               MAX(CASE WHEN r.lesson_num = 2 THEN r.value END) as lesson2
-        FROM students s
-        LEFT JOIN records r ON s.id = r.student_id AND r.date = ? AND r.subject = ?
-        GROUP BY s.id, s.full_name
-    ''', (date_str, subject))
-    data = cursor.fetchall()
-    conn.close()
-    return data
+    result = []
+    for row in rows:
+        result.append({
+            "student_id": row[0],
+            "student_name": row[1],
+            "lessons": [row[i] if row[i] is not None else "—" for i in range(2, 10)]
+        })
+    return result
 
-# ИСПРАВЛЕНО: группировка 1 и 2 уроков по дате и предмету
 def get_student_history(student_id):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT date, subject,
-               MAX(CASE WHEN lesson_num = 1 THEN value END) as lesson1,
-               MAX(CASE WHEN lesson_num = 2 THEN value END) as lesson2
-        FROM records 
-        WHERE student_id = ?
-        GROUP BY date, subject
-        ORDER BY date DESC, subject
+        SELECT r.date, r.subject, r.lesson_num, r.value, COALESCE(t.topic, '') as topic
+        FROM records r
+        LEFT JOIN lesson_topics t ON r.subject = t.subject AND r.date = t.date AND r.lesson_num = t.lesson_num
+        WHERE r.student_id = ? AND r.value != '—'
+        ORDER BY r.date DESC, r.subject, r.lesson_num
     ''', (student_id,))
     data = cursor.fetchall()
     conn.close()
     return data
 
-if __name__ == "__main__":
-    init_db()
-    print("[+] База данных инициализирована.")
+def save_topic(subject, date, lesson_num, topic):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO lesson_topics (subject, date, lesson_num, topic)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(subject, date, lesson_num) 
+        DO UPDATE SET topic = excluded.topic
+    ''', (subject, date, lesson_num, topic))
+    conn.commit()
+    conn.close()
+
+def get_topic(subject, date, lesson_num):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT topic FROM lesson_topics WHERE subject = ? AND date = ? AND lesson_num = ?", (subject, date, lesson_num))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else ""
