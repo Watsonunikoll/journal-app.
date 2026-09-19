@@ -1,13 +1,10 @@
-# server.py
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import database
 
-# ✅ Обязательно со скобками ()
 app = FastAPI()
-
 database.init_db()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -32,6 +29,12 @@ class ProfileUpdateRequest(BaseModel):
     new_username: str
     new_password: str
 
+class TopicSchema(BaseModel):
+    subject: str
+    date: str
+    lesson_num: int
+    topic: str
+
 @app.post("/api/login")
 def login(data: LoginRequest):
     user = database.authenticate_user(data.username, data.password)
@@ -55,8 +58,8 @@ def get_students():
     return database.get_all_students()
 
 @app.get("/api/teacher_records")
-def get_teacher_records(subject: str, date: str):
-    return database.get_teacher_records_for_date(subject, date)
+def get_teacher_records(subject: str, date: str, l1: int = 1, l2: int = 2):
+    return database.get_teacher_records_for_date(subject, date, l1, l2)
 
 @app.post("/api/save_record")
 def save_record(data: RecordRequest):
@@ -65,7 +68,7 @@ def save_record(data: RecordRequest):
 
 @app.get("/api/curator/by_date")
 def get_by_date(date: str, subject: str):
-    return database.get_records_by_date_and_subject(date, subject)
+    return database.get_curator_grid_by_date(date, subject)
 
 @app.get("/api/curator/student_history/{student_id}")
 def get_student_history(student_id: int):
@@ -74,3 +77,13 @@ def get_student_history(student_id: int):
 @app.get("/api/subjects")
 def get_subjects():
     return database.get_all_subjects()
+
+@app.post("/api/topic")
+def set_topic(data: TopicSchema):
+    database.save_topic(data.subject, data.date, data.lesson_num, data.topic)
+    return {"status": "success"}
+
+@app.get("/api/topic")
+def get_topic(subject: str, date: str, lesson_num: int):
+    topic = database.get_topic(subject, date, lesson_num)
+    return {"topic": topic}
