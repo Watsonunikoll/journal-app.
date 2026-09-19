@@ -44,7 +44,7 @@
         background: #0056b3;
       }
       .container {
-        max-width: 1000px;
+        max-width: 1100px;
         margin: 0 auto;
         background: white;
         padding: 25px;
@@ -59,15 +59,16 @@
       th,
       td {
         border: 1px solid #e0e0e0;
-        padding: 12px;
+        padding: 10px;
         text-align: center;
       }
       th {
         background: #007bff;
         color: white;
+        font-size: 14px;
       }
       .hidden {
-        display: none;
+        display: none !important;
       }
       .header-flex {
         display: flex;
@@ -98,6 +99,19 @@
         margin-bottom: 20px;
         flex-wrap: wrap;
       }
+      .settings-box {
+        background: #f1f3f5;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      .curator-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background: #e9ecef;
+        font-weight: bold;
+      }
     </style>
   </head>
   <body>
@@ -124,13 +138,86 @@
       <div class="header-flex">
         <h2 id="teacher-info" style="margin: 0"></h2>
         <div>
-          <label>Ամսաթիվ: </label>
+          <button
+            onclick="toggleSettings('teacher')"
+            style="background: #6c757d"
+          >
+            Կարգավորումներ
+          </button>
+          <button onclick="logout()" style="background: #dc3545">Ելք</button>
+        </div>
+      </div>
+
+      <!-- Смена профиля -->
+      <div id="settings-panel" class="settings-box hidden">
+        <h3>Փոխել Մուտքանունը / Գաղտնաբառը</h3>
+        <input type="text" id="new-username" placeholder="Նոր մուտքանուն" />
+        <input
+          type="password"
+          id="new-password"
+          placeholder="Նոր գաղտնաբառ (թողնել դատարկ եթե չեք փոխում)"
+        />
+        <button onclick="updateProfile('teacher')">Պահպանել տվյալները</button>
+      </div>
+
+      <div class="filter-group">
+        <label
+          >Ամսաթիվ:
           <input
             type="date"
             id="teacher-date"
             style="width: auto"
             onchange="loadTeacherData()"
           />
+        </label>
+
+        <label
+          >Ընտրել Դասերի Զույգը:
+          <select
+            id="lesson-pair-select"
+            onchange="loadTeacherData()"
+            style="width: auto"
+          >
+            <option value="1-2" selected>1-ին և 2-րդ դաս (1-2)</option>
+            <option value="3-4">3-րդ և 4-րդ դաս (3-4)</option>
+            <option value="5-6">5-րդ և 6-րդ դաս (5-6)</option>
+            <option value="7-8">7-րդ և 8-րդ դաս (7-8)</option>
+            <option value="9">9-րդ դաս (առանձին)</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- Темы уроков -->
+      <div
+        class="filter-group"
+        style="flex-direction: column; align-items: flex-start"
+      >
+        <h4>Օրվա թեմաները (Темы уроков)</h4>
+        <div
+          style="width: 100%; display: flex; gap: 10px; align-items: center"
+          id="row-topic-1"
+        >
+          <span id="label-topic-1">1-ին Դաս:</span>
+          <input
+            type="text"
+            id="topic-1"
+            placeholder="Մուտքագրեք թեման"
+            style="flex: 1"
+          />
+          <button onclick="saveTopic(1)">Պահպանել թեման</button>
+        </div>
+        <div
+          style="width: 100%; display: flex; gap: 10px; align-items: center"
+          id="row-topic-2"
+        >
+          <span id="label-topic-2">2-րդ Դաս:</span>
+          <input
+            type="text"
+            id="topic-2"
+            placeholder="Մուտքագրեք թեման"
+            style="flex: 1"
+          />
+          <button onclick="saveTopic(2)">Պահպանել թեման</button>
         </div>
       </div>
 
@@ -138,8 +225,8 @@
         <thead>
           <tr>
             <th>Ուսանող</th>
-            <th>1-ին դաս</th>
-            <th>2-րդ դաս</th>
+            <th id="th-lesson-1">1-ին դաս</th>
+            <th id="th-lesson-2">2-րդ դաս</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -152,7 +239,31 @@
     <div id="curator-screen" class="container hidden">
       <div class="header-flex">
         <h2 id="curator-info" style="margin: 0"></h2>
-        <span>Ռեժիմ: Կուրատոր</span>
+        <div>
+          <span>Ռեժիմ: Կուրատոր</span>
+          <button
+            onclick="toggleSettings('curator')"
+            style="background: #6c757d; margin-left: 10px"
+          >
+            Կարգավորումներ
+          </button>
+          <button onclick="logout()" style="background: #dc3545">Ելք</button>
+        </div>
+      </div>
+
+      <div id="curator-settings-panel" class="settings-box hidden">
+        <h3>Փոխել Մուտքանունը / Գաղտնաբառը</h3>
+        <input
+          type="text"
+          id="curator-new-username"
+          placeholder="Նոր մուտքանուն"
+        />
+        <input
+          type="password"
+          id="curator-new-password"
+          placeholder="Նոր գաղտնաբառ"
+        />
+        <button onclick="updateProfile('curator')">Պահպանել տվյալները</button>
       </div>
 
       <!-- Вкладки -->
@@ -178,8 +289,12 @@
         <div class="filter-group">
           <label
             >Ամսաթիվ:
-            <input type="date" id="curator-date" onchange="loadCuratorByDate()"
-          /></label>
+            <input
+              type="date"
+              id="curator-date"
+              onchange="loadCuratorByDate()"
+            />
+          </label>
           <label
             >Առարկա:
             <select
@@ -198,9 +313,15 @@
         <table id="curator-date-table">
           <thead>
             <tr>
-              <th>Ուսանող</th>
+              <th style="width: 20%">Ուսանող</th>
               <th>1-ին դաս</th>
               <th>2-րդ դաս</th>
+              <th>3-րդ դաս</th>
+              <th>4-րդ դաս</th>
+              <th>5-րդ դաս</th>
+              <th>6-րդ դաս</th>
+              <th>7-րդ դաս</th>
+              <th>8-րդ դաս</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -228,8 +349,9 @@
             <tr>
               <th>Ամսաթիվ</th>
               <th>Առարկա</th>
-              <th>1-ին դաս</th>
-              <th>2-րդ դաս</th>
+              <th>Դաս №</th>
+              <th>Գնահատական</th>
+              <th>Թեմա</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -279,6 +401,8 @@
                 .classList.remove("hidden");
               document.getElementById("curator-info").innerText =
                 `${currentUser.full_name}`;
+              document.getElementById("curator-new-username").value =
+                currentUser.username;
               await initCuratorPanel();
             } else {
               document
@@ -286,6 +410,8 @@
                 .classList.remove("hidden");
               document.getElementById("teacher-info").innerText =
                 `${currentUser.full_name} (${currentUser.subject})`;
+              document.getElementById("new-username").value =
+                currentUser.username;
               loadTeacherData();
             }
           } else {
@@ -296,10 +422,88 @@
         }
       }
 
+      function logout() {
+        location.reload();
+      }
+
+      function toggleSettings(role = "teacher") {
+        const panel =
+          role === "teacher"
+            ? document.getElementById("settings-panel")
+            : document.getElementById("curator-settings-panel");
+        panel.classList.toggle("hidden");
+      }
+
+      async function updateProfile(role = "teacher") {
+        const uInput =
+          role === "teacher"
+            ? document.getElementById("new-username").value
+            : document.getElementById("curator-new-username").value;
+        const pInput =
+          role === "teacher"
+            ? document.getElementById("new-password").value
+            : document.getElementById("curator-new-password").value;
+
+        const res = await fetch("/api/update_profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: currentUser.id,
+            new_username: uInput,
+            new_password: pInput,
+          }),
+        });
+
+        const data = await res.json();
+        alert(data.message);
+        if (data.success) {
+          currentUser.username = uInput;
+          toggleSettings(role);
+        }
+      }
+
+      function getSelectedLessons() {
+        const val = document.getElementById("lesson-pair-select").value;
+        if (val === "9") return [9, null];
+        const parts = val.split("-").map(Number);
+        return [parts[0], parts[1]];
+      }
+
       async function loadTeacherData() {
         const dateStr = document.getElementById("teacher-date").value;
+        const [l1, l2] = getSelectedLessons();
+
+        document.getElementById("th-lesson-1").innerText = `${l1}-րդ դաս`;
+        document.getElementById("label-topic-1").innerText = `${l1}-րդ Դաս:`;
+
+        if (l2) {
+          document.getElementById("th-lesson-2").classList.remove("hidden");
+          document.getElementById("row-topic-2").classList.remove("hidden");
+          document.getElementById("th-lesson-2").innerText = `${l2}-րդ դաս`;
+          document.getElementById("label-topic-2").innerText = `${l2}-րդ Դաս:`;
+        } else {
+          document.getElementById("th-lesson-2").classList.add("hidden");
+          document.getElementById("row-topic-2").classList.add("hidden");
+        }
+
+        // Загрузка тем
+        const t1Res = await fetch(
+          `/api/topic?subject=${encodeURIComponent(currentUser.subject)}&date=${dateStr}&lesson_num=${l1}`,
+        );
+        const t1Data = await t1Res.json();
+        document.getElementById("topic-1").value = t1Data.topic || "";
+
+        if (l2) {
+          const t2Res = await fetch(
+            `/api/topic?subject=${encodeURIComponent(currentUser.subject)}&date=${dateStr}&lesson_num=${l2}`,
+          );
+          const t2Data = await t2Res.json();
+          document.getElementById("topic-2").value = t2Data.topic || "";
+        }
+
+        // Загрузка оценок
         const res = await fetch(
-          `/api/teacher_records?subject=${encodeURIComponent(currentUser.subject)}&date=${dateStr}`,
+          `/api/teacher_records?subject=${encodeURIComponent(currentUser.subject)}&date=${dateStr}&l1=${l1}&l2=${l2 || 0}`,
         );
         const records = await res.json();
 
@@ -307,21 +511,23 @@
         tbody.innerHTML = "";
 
         records.forEach((r) => {
-          const [s_id, name, l1, l2] = r;
+          const [s_id, name, val1, val2] = r;
           const row = document.createElement("tr");
           row.dataset.studentId = s_id;
 
+          let col2Html = l2 ? `<td>${createSelect(val2, 2)}</td>` : "";
+
           row.innerHTML = `
-                    <td style="text-align: left; font-weight: bold;">${name}</td>
-                    <td>${createSelect(l1, 1)}</td>
-                    <td>${createSelect(l2, 2)}</td>
-                `;
+            <td style="text-align: left; font-weight: bold;">${name}</td>
+            <td>${createSelect(val1, 1)}</td>
+            ${col2Html}
+          `;
           tbody.appendChild(row);
         });
       }
 
-      function createSelect(selectedVal, lessonNum) {
-        let html = `<select class="lesson-${lessonNum}">`;
+      function createSelect(selectedVal, slotNum) {
+        let html = `<select class="slot-${slotNum}">`;
         gradesOptions.forEach((opt) => {
           const sel = opt === selectedVal ? "selected" : "";
           html += `<option value="${opt}" ${sel}>${opt}</option>`;
@@ -330,14 +536,35 @@
         return html;
       }
 
+      async function saveTopic(slotNum) {
+        const dateStr = document.getElementById("teacher-date").value;
+        const [l1, l2] = getSelectedLessons();
+        const lessonNum = slotNum === 1 ? l1 : l2;
+        const topicVal = document.getElementById(`topic-${slotNum}`).value;
+
+        if (!lessonNum) return;
+
+        await fetch("/api/topic", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            subject: currentUser.subject,
+            date: dateStr,
+            lesson_num: lessonNum,
+            topic: topicVal,
+          }),
+        });
+        alert(`Թեման պահպանվեց (${lessonNum}-րդ դաս):`);
+      }
+
       async function saveGrades() {
         const dateStr = document.getElementById("teacher-date").value;
+        const [l1, l2] = getSelectedLessons();
         const rows = document.querySelectorAll("#grades-table tbody tr");
 
         for (let row of rows) {
           const studentId = parseInt(row.dataset.studentId);
-          const val1 = row.querySelector(".lesson-1").value;
-          const val2 = row.querySelector(".lesson-2").value;
+          const val1 = row.querySelector(".slot-1").value;
 
           await fetch("/api/save_record", {
             method: "POST",
@@ -346,28 +573,30 @@
               student_id: studentId,
               subject: currentUser.subject,
               date: dateStr,
-              lesson_num: 1,
+              lesson_num: l1,
               value: val1,
             }),
           });
 
-          await fetch("/api/save_record", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              student_id: studentId,
-              subject: currentUser.subject,
-              date: dateStr,
-              lesson_num: 2,
-              value: val2,
-            }),
-          });
+          if (l2) {
+            const val2 = row.querySelector(".slot-2").value;
+            await fetch("/api/save_record", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                student_id: studentId,
+                subject: currentUser.subject,
+                date: dateStr,
+                lesson_num: l2,
+                value: val2,
+              }),
+            });
+          }
         }
         alert("Գնահատականները պահպանված են:");
       }
 
       async function initCuratorPanel() {
-        // Загрузка студентов
         const resSt = await fetch("/api/students");
         const students = await resSt.json();
         const selectSt = document.getElementById("curator-student-select");
@@ -380,7 +609,6 @@
           selectSt.appendChild(opt);
         });
 
-        // Загрузка предметов прямо из SQLite
         const resSub = await fetch("/api/subjects");
         const subjects = await resSub.json();
         const subjSelect = document.getElementById("curator-subject-select");
@@ -434,18 +662,16 @@
         const tbody = document.querySelector("#curator-date-table tbody");
         tbody.innerHTML = "";
 
-        if (records.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="3">Տվյալներ չկան</td></tr>';
-          return;
-        }
-
         records.forEach((r) => {
           const row = document.createElement("tr");
-          row.innerHTML = `
-                    <td style="text-align: left; font-weight: bold;">${r[0]}</td>
-                    <td>${r[1] || "—"}</td>
-                    <td>${r[2] || "—"}</td>
-                `;
+          let cells = `<td style="text-align: left; font-weight: bold;">${r.student_name}</td>`;
+
+          r.lessons.forEach((val) => {
+            const badgeClass = val !== "—" ? "curator-badge" : "";
+            cells += `<td><span class="${badgeClass}">${val}</span></td>`;
+          });
+
+          row.innerHTML = cells;
           tbody.appendChild(row);
         });
       }
@@ -463,19 +689,20 @@
         tbody.innerHTML = "";
 
         if (history.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4">Տվյալներ չկան</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5">Տվյալներ չկան</td></tr>';
           return;
         }
 
         history.forEach((h) => {
-          // h = [date, subject, lesson1, lesson2]
+          // h = [date, subject, lesson_num, value, topic]
           const row = document.createElement("tr");
           row.innerHTML = `
-                    <td>${h[0]}</td>
-                    <td>${h[1]}</td>
-                    <td>${h[2] || "—"}</td>
-                    <td>${h[3] || "—"}</td>
-                `;
+            <td>${h[0]}</td>
+            <td>${h[1]}</td>
+            <td>${h[2]}-րդ դաս</td>
+            <td><b>${h[3]}</b></td>
+            <td style="text-align: left;">${h[4] || "—"}</td>
+          `;
           tbody.appendChild(row);
         });
       }
