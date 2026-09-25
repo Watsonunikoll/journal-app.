@@ -6,3 +6,4 @@ pandas
 openpyxl
 python-multipart
 passlib[bcrypt]
+ 
