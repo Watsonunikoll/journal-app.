@@ -6,10 +6,11 @@
     <title>Էլեկտրոնային Մատյան - Քոլեջ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, sans-serif; }
         .card-custom { border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .nav-pills .nav-link.active { background-color: #0d6efd; font-weight: 600; }
-        .grade-input { width: 60px; text-align: center; }
+        .grade-btn-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+        .cell-grade { cursor: pointer; text-align: center; font-weight: bold; min-width: 45px; background: #fff; }
+        .cell-grade:hover { background: #e9ecef; }
     </style>
 </head>
 <body>
@@ -20,105 +21,115 @@
     <div id="login-section" class="row justify-content-center my-5">
         <div class="col-md-4">
             <div class="card card-custom p-4">
-                <h4 class="text-center mb-4 font-weight-bold">Մուտք համակարգ</h4>
-                <div class="mb-3">
-                    <label class="form-label">Օգտանուն (Username)</label>
-                    <input type="text" id="login-username" class="form-control" placeholder="admin կամ teacher1">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Գաղտնաբառ (Password)</label>
-                    <input type="password" id="login-password" class="form-control" placeholder="••••••••">
-                </div>
+                <h4 class="text-center mb-4">Մուտք համակարգ</h4>
+                <input type="text" id="login-username" class="form-control mb-3" placeholder="Օգտանուն (admin / teacher1)">
+                <input type="password" id="login-password" class="form-control mb-3" placeholder="Գաղտնաբառ">
                 <button onclick="handleLogin()" class="btn btn-primary w-100">Մուտք</button>
             </div>
         </div>
     </div>
 
-    <!-- Главная панель после входа -->
+    <!-- Главная область -->
     <div id="app-section" style="display: none;">
         
-        <!-- Верхняя шапка -->
+        <!-- Шапка -->
         <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded card-custom">
             <div>
-                <h5 class="m-0" id="user-display">Օգտատեր: -</h5>
-                <small class="text-muted" id="role-display">Դեր: -</small>
+                <h5 class="m-0" id="user-display"></h5>
+                <small class="text-muted" id="role-display"></small>
             </div>
             <div class="d-flex gap-2">
-                <!-- Переключатель режима для Կուրսղեկ -->
                 <div id="kursghek-toggle" style="display: none;">
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-outline-primary active" id="mode-teacher-btn" onclick="switchMode('teacher')">Դասախոս</button>
-                        <button type="button" class="btn btn-outline-primary" id="mode-kursghek-btn" onclick="switchMode('kursghek')">Կուրսղեկ</button>
-                    </div>
+                    <button class="btn btn-outline-primary active" id="btn-mode-teacher" onclick="switchMode('teacher')">Դասախոս</button>
+                    <button class="btn btn-outline-success" id="btn-mode-kursghek" onclick="switchMode('kursghek')">Ընդհանուր գնահատականներ</button>
                 </div>
-                <button onclick="handleLogout()" class="btn btn-danger btn-sm">Ելք</button>
+                <button onclick="location.reload()" class="btn btn-danger btn-sm">Ելք</button>
             </div>
         </div>
 
-        <!-- Панель АДМИНИСТРАТОРА -->
+        <!-- АДМԻՆ ՊԱՆԵԼ -->
         <div id="admin-panel" class="card card-custom p-4 mb-4" style="display: none;">
-            <h5 class="mb-3 text-primary">Ադմինիստրատորի Պանել (Կառավարում)</h5>
-            <div class="row g-3">
+            <h5 class="text-danger mb-3">Ադմինիստրատորի Պանել</h5>
+            <div class="row g-3 mb-3">
                 <div class="col-md-4">
-                    <label class="form-label">Ընտրել Կուրսը</label>
-                    <select id="admin-course-select" class="form-select"></select>
+                    <label>Վերանվանել Կուրսը</label>
+                    <select id="admin-course-list" class="form-select mb-2"></select>
+                    <input type="text" id="admin-new-course-name" class="form-control mb-2" placeholder="Նոր անվանում (օր. ՀԾ 1)">
+                    <button onclick="renameCourse()" class="btn btn-warning btn-sm w-100">Պահպանել Անվանումը</button>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Ավելացնել Ուսանող (ԱԱՀ)</label>
-                    <div class="input-group">
-                        <input type="text" id="admin-student-name" class="form-control" placeholder="Անուն Ազգանուն">
-                        <button onclick="addStudent()" class="btn btn-success">+</button>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Ներմուծել Excel / CSV-ից</label>
-                    <input type="file" id="admin-file-import" class="form-control" onchange="importExcel()">
+                    <label>Ավելացնել Առարկա</label>
+                    <input type="text" id="admin-new-subject" class="form-control mb-2" placeholder="Առարկայի անունը">
+                    <button onclick="addSubject()" class="btn btn-success btn-sm w-100">+ Ավելացնել Առարկա</button>
                 </div>
             </div>
         </div>
 
-        <!-- Фильтры выбора: Дата, Курс и Занятия -->
-        <div class="card card-custom p-3 mb-4">
-            <div class="row g-3 align-items-center">
+        <!-- Фильтры Учителя -->
+        <div id="teacher-filters" class="card card-custom p-3 mb-4">
+            <div class="row g-3">
                 <div class="col-md-3">
-                    <label class="form-label">Ամսաթիվ:</label>
+                    <label>Ամսաթիվ:</label>
                     <input type="date" id="selected-date" class="form-control" onchange="loadJournalData()">
                 </div>
-                <div class="col-md-4" id="course-select-box">
-                    <label class="form-label">Ընտրել Կուրսը:</label>
+                <div class="col-md-3">
+                    <label>Ընտրել Կուրսը:</label>
                     <select id="selected-course" class="form-select" onchange="loadJournalData()"></select>
                 </div>
-                <div class="col-md-4" id="lessons-select-box">
-                    <label class="form-label">Ընտրել Դասերի Զույգը:</label>
+                <div class="col-md-3">
+                    <label>Ընտրել Առարկան:</label>
+                    <select id="selected-subject" class="form-select" onchange="loadJournalData()"></select>
+                </div>
+                <div class="col-md-3">
+                    <label>Դասերի Զույգը:</label>
                     <select id="selected-lessons" class="form-select" onchange="loadJournalData()">
-                        <option value="1-2">1-ին և 2-րդ դաս (1-2)</option>
-                        <option value="3-4">3-րդ և 4-րդ դաս (3-4)</option>
-                        <option value="5-6">5-րդ և 6-րդ դաս (5-6)</option>
-                        <option value="7-8">7-րդ և 8-րդ դաս (7-8)</option>
+                        <option value="1-2">1-ին և 2-րդ դաս</option>
+                        <option value="3-4">3-րդ և 4-րդ դաս</option>
+                        <option value="5-6">5-րդ և 6-րդ դաս</option>
+                        <option value="7-8">7-րդ և 8-րդ դաս</option>
+                        <option value="9">9-րդ դաս</option>
                     </select>
                 </div>
             </div>
         </div>
 
-        <!-- Журнал оценок -->
-        <div class="card card-custom p-4">
+        <!-- Сетка Журнала -->
+        <div id="journal-view" class="card card-custom p-4">
             <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle">
+                <table class="table table-bordered align-middle">
                     <thead class="table-light">
                         <tr>
                             <th>#</th>
-                            <th>Ուսանող (Ազգանուն Անուն)</th>
-                            <th class="text-center" id="th-lesson-1">1-ին դաս</th>
-                            <th class="text-center" id="th-lesson-2">2-րդ դաս</th>
+                            <th>Ուսանող</th>
+                            <th class="text-center" id="th-l1">Դաս 1</th>
+                            <th class="text-center" id="th-l2">Դաս 2</th>
                         </tr>
                     </thead>
-                    <tbody id="students-table-body">
-                        <!-- Динамический список студентов -->
-                    </tbody>
+                    <tbody id="students-table-body"></tbody>
                 </table>
             </div>
-            <div class="text-end mt-3">
-                <button onclick="saveAllGrades()" class="btn btn-primary px-4">Պահպանել</button>
+            <button onclick="saveGrades()" class="btn btn-primary mt-3">Պահպանել Գնահատականները</button>
+        </div>
+
+        <!-- Режим Ընդհանուր գնահատականներ (Куратор) -->
+        <div id="kursghek-view" class="card card-custom p-4" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>Ընդհանուր Գնահատականների Ցանկ (Կուրսղեկ)</h5>
+                <button onclick="downloadExcel()" class="btn btn-outline-success">⬇️ Բեռնել Excel (.xlsx)</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Ամսաթիվ</th>
+                            <th>Ուսանող</th>
+                            <th>Առարկա</th>
+                            <th>Դաս №</th>
+                            <th>Գնահատական</th>
+                        </tr>
+                    </thead>
+                    <tbody id="kursghek-table-body"></tbody>
+                </table>
             </div>
         </div>
 
@@ -126,28 +137,40 @@
 
 </div>
 
+<!-- Модальное окно Выбора Оценки (Quick Select) -->
+<div class="modal fade" id="gradeModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header"><h6 class="modal-title">Ընտրել Գնահատական</h6></div>
+      <div class="modal-body">
+        <div class="grade-btn-grid">
+            <button class="btn btn-outline-primary" onclick="setGrade('1')">1</button>
+            <button class="btn btn-outline-primary" onclick="setGrade('2')">2</button>
+            <button class="btn btn-outline-primary" onclick="setGrade('3')">3</button>
+            <button class="btn btn-outline-primary" onclick="setGrade('4')">4</button>
+            <button class="btn btn-outline-primary" onclick="setGrade('5')">5</button>
+            <button class="btn btn-outline-primary" onclick="setGrade('6')">6</button>
+            <button class="btn btn-outline-primary" onclick="setGrade('7')">7</button>
+            <button class="btn btn-outline-primary" onclick="setGrade('8')">8</button>
+            <button class="btn btn-outline-primary" onclick="setGrade('9')">9</button>
+            <button class="btn btn-outline-primary" onclick="setGrade('10')">10</button>
+            <button class="btn btn-danger" onclick="setGrade('Բ')">Բ</button>
+            <button class="btn btn-warning" onclick="setGrade('Հ')">Հ</button>
+            <button class="btn btn-info" onclick="setGrade('Ն')">Ն</button>
+            <button class="btn btn-secondary" onclick="setGrade('')">✖</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     let currentUser = null;
-    let currentMode = 'teacher';
+    let activeCellId = null;
+    let gradeModal = null;
 
-    // Установка сегодняшней даты
     document.getElementById('selected-date').valueAsDate = new Date();
-
-    async function fetchCourses() {
-        const res = await fetch('/api/courses');
-        const courses = await res.json();
-        
-        const courseSelect = document.getElementById('selected-course');
-        const adminCourseSelect = document.getElementById('admin-course-select');
-        
-        courseSelect.innerHTML = '';
-        adminCourseSelect.innerHTML = '';
-
-        courses.forEach(c => {
-            courseSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-            adminCourseSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-        });
-    }
 
     async function handleLogin() {
         const u = document.getElementById('login-username').value;
@@ -159,90 +182,93 @@
             body: JSON.stringify({username: u, password: p})
         });
 
-        if (!res.ok) {
-            alert('Անվավեր մուտքանուն կամ գաղտնաբառ');
-            return;
-        }
+        if (!res.ok) return alert('Սխալ մուտքանուն կամ գաղտնաբառ');
 
         currentUser = await res.json();
-        
+        gradeModal = new bootstrap.Modal(document.getElementById('gradeModal'));
+
         document.getElementById('login-section').style.display = 'none';
         document.getElementById('app-section').style.display = 'block';
 
-        document.getElementById('user-display').innerText = `Օգտատեր: ${currentUser.username}`;
-        document.getElementById('role-display').innerText = `Դեր: ${currentUser.role === 'admin' ? 'Ադմինիստրատոր' : 'Դասախոս'}`;
+        document.getElementById('user-display').innerText = currentUser.full_name;
+        document.getElementById('role-display').innerText = currentUser.role === 'admin' ? 'Ադմինիստրատոր' : 'Դասախոս';
 
-        if (currentUser.role === 'admin') {
-            document.getElementById('admin-panel').style.display = 'block';
-        }
+        if (currentUser.role === 'admin') document.getElementById('admin-panel').style.display = 'block';
+        if (currentUser.is_kursghek) document.getElementById('kursghek-toggle').style.display = 'block';
 
-        if (currentUser.is_kursghek) {
-            document.getElementById('kursghek-toggle').style.display = 'block';
-        }
-
-        await fetchCourses();
+        await loadCoursesAndSubjects();
         loadJournalData();
     }
 
-    function switchMode(mode) {
-        currentMode = mode;
-        document.getElementById('mode-teacher-btn').classList.toggle('active', mode === 'teacher');
-        document.getElementById('mode-kursghek-btn').classList.toggle('active', mode === 'kursghek');
+    async function loadCoursesAndSubjects() {
+        const cRes = await fetch('/api/courses');
+        const courses = await cRes.json();
+        const cSel = document.getElementById('selected-course');
+        const admSel = document.getElementById('admin-course-list');
+        cSel.innerHTML = ''; admSel.innerHTML = '';
+        courses.forEach(c => {
+            cSel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+            admSel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+        });
 
-        if (mode === 'kursghek') {
-            // В режиме куратора автоматом выбирается его прикрепленный курс
-            document.getElementById('selected-course').value = currentUser.assigned_course_id;
-            document.getElementById('selected-course').disabled = true;
-        } else {
-            document.getElementById('selected-course').disabled = false;
+        const sSel = document.getElementById('selected-subject');
+        sSel.innerHTML = '';
+        currentUser.subjects.forEach(s => {
+            sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+        });
+    }
+
+    function openGradePicker(id) {
+        activeCellId = id;
+        gradeModal.show();
+    }
+
+    function setGrade(val) {
+        if (activeCellId) {
+            document.getElementById(activeCellId).innerText = val;
         }
-
-        loadJournalData();
+        gradeModal.hide();
     }
 
     async function loadJournalData() {
         const courseId = document.getElementById('selected-course').value;
         const date = document.getElementById('selected-date').value;
+        const subjectId = document.getElementById('selected-subject').value;
         const lessons = document.getElementById('selected-lessons').value.split('-');
 
         if (!courseId) return;
 
-        document.getElementById('th-lesson-1').innerText = `${lessons[0]}-րդ դաս`;
-        document.getElementById('th-lesson-2').innerText = `${lessons[1]}-րդ դաս`;
+        document.getElementById('th-l1').innerText = `Դաս ${lessons[0]}`;
+        document.getElementById('th-l2').innerText = lessons[1] ? `Դաս ${lessons[1]}` : '-';
 
-        // Загрузка студентов
         const stRes = await fetch(`/api/courses/${courseId}/students`);
         const students = await stRes.json();
 
-        // Загрузка оценок
-        const grRes = await fetch(`/api/grades?course_id=${courseId}&date=${date}`);
+        const grRes = await fetch(`/api/grades?course_id=${courseId}&date=${date}&subject_id=${subjectId}`);
         const grades = await grRes.json();
 
         const tbody = document.getElementById('students-table-body');
         tbody.innerHTML = '';
 
         students.forEach((st, idx) => {
-            const g1 = grades.find(g => g.student_id === st.id && g.lesson_number == lessons[0])?.grade_value || '';
-            const g2 = grades.find(g => g.student_id === st.id && g.lesson_number == lessons[1])?.grade_value || '';
+            const g1 = grades.find(g => g.student_id === st.id && g.lesson_number == lessons[0])?.grade_value || '-';
+            const g2 = lessons[1] ? (grades.find(g => g.student_id === st.id && g.lesson_number == lessons[1])?.grade_value || '-') : '';
 
             tbody.innerHTML += `
                 <tr>
                     <td>${idx + 1}</td>
                     <td><strong>${st.full_name}</strong></td>
-                    <td class="text-center">
-                        <input type="text" class="form-control grade-input d-inline" id="g-${st.id}-${lessons[0]}" value="${g1}" placeholder="-">
-                    </td>
-                    <td class="text-center">
-                        <input type="text" class="form-control grade-input d-inline" id="g-${st.id}-${lessons[1]}" value="${g2}" placeholder="-">
-                    </td>
+                    <td class="text-center"><span id="g-${st.id}-${lessons[0]}" class="badge bg-light text-dark border cell-grade p-2" onclick="openGradePicker('g-${st.id}-${lessons[0]}')">${g1}</span></td>
+                    <td class="text-center">${lessons[1] ? `<span id="g-${st.id}-${lessons[1]}" class="badge bg-light text-dark border cell-grade p-2" onclick="openGradePicker('g-${st.id}-${lessons[1]}')">${g2}</span>` : ''}</td>
                 </tr>
             `;
         });
     }
 
-    async function saveAllGrades() {
+    async function saveGrades() {
         const courseId = document.getElementById('selected-course').value;
         const date = document.getElementById('selected-date').value;
+        const subjectId = document.getElementById('selected-subject').value;
         const lessons = document.getElementById('selected-lessons').value.split('-');
 
         const stRes = await fetch(`/api/courses/${courseId}/students`);
@@ -250,17 +276,19 @@
 
         for (let st of students) {
             for (let l of lessons) {
-                const val = document.getElementById(`g-${st.id}-${l}`).value.trim();
-                if (val !== '') {
+                if (!l) continue;
+                const elem = document.getElementById(`g-${st.id}-${l}`);
+                if (elem && elem.innerText !== '-') {
                     await fetch('/api/grades', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({
                             student_id: st.id,
                             teacher_id: currentUser.user_id,
+                            subject_id: parseInt(subjectId),
                             course_id: parseInt(courseId),
                             lesson_number: parseInt(l),
-                            grade_value: val,
+                            grade_value: elem.innerText,
                             date: date
                         })
                     });
@@ -270,41 +298,57 @@
         alert('Գնահատականները պահպանված են:');
     }
 
-    async function addStudent() {
-        const name = document.getElementById('admin-student-name').value;
-        const courseId = document.getElementById('admin-course-select').value;
+    async function switchMode(mode) {
+        if (mode === 'kursghek') {
+            document.getElementById('teacher-filters').style.display = 'none';
+            document.getElementById('journal-view').style.display = 'none';
+            document.getElementById('kursghek-view').style.display = 'block';
 
-        if (!name) return alert('Մուտքագրեք անունը');
+            const res = await fetch(`/api/kursghek/all-grades?course_id=${currentUser.assigned_course_id}`);
+            const data = await res.json();
+            const tbody = document.getElementById('kursghek-table-body');
+            tbody.innerHTML = '';
+            data.forEach(row => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${row.date}</td>
+                        <td>${row.student_name}</td>
+                        <td>${row.subject_name}</td>
+                        <td>${row.lesson_number}</td>
+                        <td><span class="badge bg-primary">${row.grade_value}</span></td>
+                    </tr>
+                `;
+            });
+        } else {
+            document.getElementById('teacher-filters').style.display = 'flex';
+            document.getElementById('journal-view').style.display = 'block';
+            document.getElementById('kursghek-view').style.display = 'none';
+        }
+    }
 
-        await fetch('/api/admin/students', {
+    function downloadExcel() {
+        window.location.href = `/api/kursghek/export-excel?course_id=${currentUser.assigned_course_id}`;
+    }
+
+    async function renameCourse() {
+        const id = document.getElementById('admin-course-list').value;
+        const name = document.getElementById('admin-new-course-name').value;
+        if (!name) return;
+        await fetch('/api/admin/update-course', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({full_name: name, course_id: parseInt(courseId)})
+            body: JSON.stringify({course_id: parseInt(id), new_name: name})
         });
-
-        document.getElementById('admin-student-name').value = '';
-        loadJournalData();
+        alert('Կուրսը վերանվանված է:');
+        loadCoursesAndSubjects();
     }
 
-    async function importExcel() {
-        const fileInput = document.getElementById('admin-file-import');
-        const courseId = document.getElementById('admin-course-select').value;
-        if (!fileInput.files[0]) return;
-
-        const formData = new FormData();
-        formData.append('file', fileInput.files[0]);
-
-        await fetch(`/api/admin/import-students?course_id=${courseId}`, {
-            method: 'POST',
-            body: formData
-        });
-
-        alert('Ֆայլը հաջողությամբ ներմուծված է:');
-        loadJournalData();
-    }
-
-    function handleLogout() {
-        location.reload();
+    async function addSubject() {
+        const name = document.getElementById('admin-new-subject').value;
+        if (!name) return;
+        await fetch(`/api/admin/add-subject?name=${encodeURIComponent(name)}`, {method: 'POST'});
+        alert('Առարկան ավելացված է:');
+        document.getElementById('admin-new-subject').value = '';
     }
 </script>
 </body>
