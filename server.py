@@ -145,3 +145,4 @@ def get_grades(course_id: int, date: str, db: Session = Depends(get_db)):
         "lesson_number": g.lesson_number,
         "grade_value": g.grade_value
     } for g in grades]
+
