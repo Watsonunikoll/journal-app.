@@ -1,5 +1,4 @@
 import os
-import sqlite3
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
@@ -7,11 +6,13 @@ from datetime import datetime
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# Авто-коррекция схемы подключения для SQLAlchemy
-if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-
+# Явно задаем драйвер psycopg3 для SQLAlchemy
 if DATABASE_URL:
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+    elif DATABASE_URL.startswith("postgresql://") and not DATABASE_URL.startswith("postgresql+psycopg://"):
+        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+    
     engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 else:
     # Фоллбэк на локальный SQLite для локальных тестов
