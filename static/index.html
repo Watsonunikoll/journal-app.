@@ -1,711 +1,311 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="hy">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Էլեկտրոնային Օրագիր</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Էլեկտրոնային Մատյան - Քոլեջ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: #eef2f5;
-        margin: 0;
-        padding: 20px;
-        color: #333;
-      }
-      .card {
-        background: white;
-        padding: 30px;
-        border-radius: 12px;
-        margin: 50px auto;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        width: 90%;
-        max-width: 400px;
-        text-align: center;
-      }
-      input,
-      select,
-      button {
-        margin: 8px 0;
-        padding: 10px;
-        border-radius: 8px;
-        border: 1px solid #ccc;
-        font-size: 15px;
-        box-sizing: border-box;
-      }
-      button {
-        background: #007bff;
-        color: white;
-        border: none;
-        cursor: pointer;
-        font-weight: bold;
-        transition: 0.2s;
-      }
-      button:hover {
-        background: #0056b3;
-      }
-      .container {
-        max-width: 1100px;
-        margin: 0 auto;
-        background: white;
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-      }
-      th,
-      td {
-        border: 1px solid #e0e0e0;
-        padding: 10px;
-        text-align: center;
-      }
-      th {
-        background: #007bff;
-        color: white;
-        font-size: 14px;
-      }
-      .hidden {
-        display: none !important;
-      }
-      .header-flex {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 2px solid #eee;
-        padding-bottom: 15px;
-        margin-bottom: 20px;
-      }
-      .tab-btn {
-        background: #e0e0e0;
-        color: #333;
-        margin-right: 5px;
-        width: auto;
-        padding: 8px 16px;
-      }
-      .tab-btn.active {
-        background: #007bff;
-        color: white;
-      }
-      .filter-group {
-        display: flex;
-        gap: 15px;
-        align-items: center;
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-      }
-      .settings-box {
-        background: #f1f3f5;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-      }
-      .curator-badge {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 4px;
-        background: #e9ecef;
-        font-weight: bold;
-      }
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card-custom { border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .nav-pills .nav-link.active { background-color: #0d6efd; font-weight: 600; }
+        .grade-input { width: 60px; text-align: center; }
     </style>
-  </head>
-  <body>
-    <!-- Экран входа -->
-    <div id="login-screen" class="card">
-      <h2>Մուտք Համակարգ</h2>
-      <input
-        type="text"
-        id="username"
-        placeholder="Մուտքանուն (Username)"
-        style="width: 100%"
-      />
-      <input
-        type="password"
-        id="password"
-        placeholder="Գաղտնաբառ (Password)"
-        style="width: 100%"
-      />
-      <button onclick="login()" style="width: 100%">Մտնել</button>
+</head>
+<body>
+
+<div class="container py-4">
+
+    <!-- Форма входа -->
+    <div id="login-section" class="row justify-content-center my-5">
+        <div class="col-md-4">
+            <div class="card card-custom p-4">
+                <h4 class="text-center mb-4 font-weight-bold">Մուտք համակարգ</h4>
+                <div class="mb-3">
+                    <label class="form-label">Օգտանուն (Username)</label>
+                    <input type="text" id="login-username" class="form-control" placeholder="admin կամ teacher1">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Գաղտնաբառ (Password)</label>
+                    <input type="password" id="login-password" class="form-control" placeholder="••••••••">
+                </div>
+                <button onclick="handleLogin()" class="btn btn-primary w-100">Մուտք</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Кабинет Учителя -->
-    <div id="teacher-screen" class="container hidden">
-      <div class="header-flex">
-        <h2 id="teacher-info" style="margin: 0"></h2>
-        <div>
-          <button
-            onclick="toggleSettings('teacher')"
-            style="background: #6c757d"
-          >
-            Կարգավորումներ
-          </button>
-          <button onclick="logout()" style="background: #dc3545">Ելք</button>
+    <!-- Главная панель после входа -->
+    <div id="app-section" style="display: none;">
+        
+        <!-- Верхняя шапка -->
+        <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded card-custom">
+            <div>
+                <h5 class="m-0" id="user-display">Օգտատեր: -</h5>
+                <small class="text-muted" id="role-display">Դեր: -</small>
+            </div>
+            <div class="d-flex gap-2">
+                <!-- Переключатель режима для Կուրսղեկ -->
+                <div id="kursghek-toggle" style="display: none;">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary active" id="mode-teacher-btn" onclick="switchMode('teacher')">Դասախոս</button>
+                        <button type="button" class="btn btn-outline-primary" id="mode-kursghek-btn" onclick="switchMode('kursghek')">Կուրսղեկ</button>
+                    </div>
+                </div>
+                <button onclick="handleLogout()" class="btn btn-danger btn-sm">Ելք</button>
+            </div>
         </div>
-      </div>
 
-      <!-- Смена профиля -->
-      <div id="settings-panel" class="settings-box hidden">
-        <h3>Փոխել Մուտքանունը / Գաղտնաբառը</h3>
-        <input type="text" id="new-username" placeholder="Նոր մուտքանուն" />
-        <input
-          type="password"
-          id="new-password"
-          placeholder="Նոր գաղտնաբառ (թողնել դատարկ եթե չեք փոխում)"
-        />
-        <button onclick="updateProfile('teacher')">Պահպանել տվյալները</button>
-      </div>
-
-      <div class="filter-group">
-        <label
-          >Ամսաթիվ:
-          <input
-            type="date"
-            id="teacher-date"
-            style="width: auto"
-            onchange="loadTeacherData()"
-          />
-        </label>
-
-        <label
-          >Ընտրել Դասերի Զույգը:
-          <select
-            id="lesson-pair-select"
-            onchange="loadTeacherData()"
-            style="width: auto"
-          >
-            <option value="1-2" selected>1-ին և 2-րդ դաս (1-2)</option>
-            <option value="3-4">3-րդ և 4-րդ դաս (3-4)</option>
-            <option value="5-6">5-րդ և 6-րդ դաս (5-6)</option>
-            <option value="7-8">7-րդ և 8-րդ դաս (7-8)</option>
-            <option value="9">9-րդ դաս (առանձին)</option>
-          </select>
-        </label>
-      </div>
-
-      <!-- Темы уроков -->
-      <div
-        class="filter-group"
-        style="flex-direction: column; align-items: flex-start"
-      >
-        <h4>Օրվա թեմաները (Темы уроков)</h4>
-        <div
-          style="width: 100%; display: flex; gap: 10px; align-items: center"
-          id="row-topic-1"
-        >
-          <span id="label-topic-1">1-ին Դաս:</span>
-          <input
-            type="text"
-            id="topic-1"
-            placeholder="Մուտքագրեք թեման"
-            style="flex: 1"
-          />
-          <button onclick="saveTopic(1)">Պահպանել թեման</button>
+        <!-- Панель АДМИНИСТРАТОРА -->
+        <div id="admin-panel" class="card card-custom p-4 mb-4" style="display: none;">
+            <h5 class="mb-3 text-primary">Ադմինիստրատորի Պանել (Կառավարում)</h5>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Ընտրել Կուրսը</label>
+                    <select id="admin-course-select" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Ավելացնել Ուսանող (ԱԱՀ)</label>
+                    <div class="input-group">
+                        <input type="text" id="admin-student-name" class="form-control" placeholder="Անուն Ազգանուն">
+                        <button onclick="addStudent()" class="btn btn-success">+</button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Ներմուծել Excel / CSV-ից</label>
+                    <input type="file" id="admin-file-import" class="form-control" onchange="importExcel()">
+                </div>
+            </div>
         </div>
-        <div
-          style="width: 100%; display: flex; gap: 10px; align-items: center"
-          id="row-topic-2"
-        >
-          <span id="label-topic-2">2-րդ Դաս:</span>
-          <input
-            type="text"
-            id="topic-2"
-            placeholder="Մուտքագրեք թեման"
-            style="flex: 1"
-          />
-          <button onclick="saveTopic(2)">Պահպանել թեման</button>
-        </div>
-      </div>
 
-      <table id="grades-table">
-        <thead>
-          <tr>
-            <th>Ուսանող</th>
-            <th id="th-lesson-1">1-ին դաս</th>
-            <th id="th-lesson-2">2-րդ դաս</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <br />
-      <button onclick="saveGrades()" style="width: 200px">Պահպանել</button>
+        <!-- Фильтры выбора: Дата, Курс и Занятия -->
+        <div class="card card-custom p-3 mb-4">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-3">
+                    <label class="form-label">Ամսաթիվ:</label>
+                    <input type="date" id="selected-date" class="form-control" onchange="loadJournalData()">
+                </div>
+                <div class="col-md-4" id="course-select-box">
+                    <label class="form-label">Ընտրել Կուրսը:</label>
+                    <select id="selected-course" class="form-select" onchange="loadJournalData()"></select>
+                </div>
+                <div class="col-md-4" id="lessons-select-box">
+                    <label class="form-label">Ընտրել Դասերի Զույգը:</label>
+                    <select id="selected-lessons" class="form-select" onchange="loadJournalData()">
+                        <option value="1-2">1-ին և 2-րդ դաս (1-2)</option>
+                        <option value="3-4">3-րդ և 4-րդ դաս (3-4)</option>
+                        <option value="5-6">5-րդ և 6-րդ դաս (5-6)</option>
+                        <option value="7-8">7-րդ և 8-րդ դաս (7-8)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Журнал оценок -->
+        <div class="card card-custom p-4">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Ուսանող (Ազգանուն Անուն)</th>
+                            <th class="text-center" id="th-lesson-1">1-ին դաս</th>
+                            <th class="text-center" id="th-lesson-2">2-րդ դաս</th>
+                        </tr>
+                    </thead>
+                    <tbody id="students-table-body">
+                        <!-- Динамический список студентов -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-end mt-3">
+                <button onclick="saveAllGrades()" class="btn btn-primary px-4">Պահպանել</button>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Кабинет Куратора -->
-    <div id="curator-screen" class="container hidden">
-      <div class="header-flex">
-        <h2 id="curator-info" style="margin: 0"></h2>
-        <div>
-          <span>Ռեժիմ: Կուրատոր</span>
-          <button
-            onclick="toggleSettings('curator')"
-            style="background: #6c757d; margin-left: 10px"
-          >
-            Կարգավորումներ
-          </button>
-          <button onclick="logout()" style="background: #dc3545">Ելք</button>
-        </div>
-      </div>
+</div>
 
-      <div id="curator-settings-panel" class="settings-box hidden">
-        <h3>Փոխել Մուտքանունը / Գաղտնաբառը</h3>
-        <input
-          type="text"
-          id="curator-new-username"
-          placeholder="Նոր մուտքանուն"
-        />
-        <input
-          type="password"
-          id="curator-new-password"
-          placeholder="Նոր գաղտնաբառ"
-        />
-        <button onclick="updateProfile('curator')">Պահպանել տվյալները</button>
-      </div>
+<script>
+    let currentUser = null;
+    let currentMode = 'teacher';
 
-      <!-- Вкладки -->
-      <div>
-        <button
-          id="btn-tab-date"
-          class="tab-btn active"
-          onclick="switchCuratorTab('date')"
-        >
-          Ըստ Ամսաթվի
-        </button>
-        <button
-          id="btn-tab-student"
-          class="tab-btn"
-          onclick="switchCuratorTab('student')"
-        >
-          Ուսանողի Պատմություն
-        </button>
-      </div>
+    // Установка сегодняшней даты
+    document.getElementById('selected-date').valueAsDate = new Date();
 
-      <!-- По датам -->
-      <div id="curator-tab-date" style="margin-top: 15px">
-        <div class="filter-group">
-          <label
-            >Ամսաթիվ:
-            <input
-              type="date"
-              id="curator-date"
-              onchange="loadCuratorByDate()"
-            />
-          </label>
-          <label
-            >Առարկա:
-            <select
-              id="curator-subject-select"
-              onchange="loadCuratorByDate()"
-              style="width: auto"
-            >
-              <option value="">Ընտրել առարկան</option>
-            </select>
-          </label>
-          <button onclick="loadCuratorByDate()" style="width: auto">
-            Ցուցադրել
-          </button>
-        </div>
+    async function fetchCourses() {
+        const res = await fetch('/api/courses');
+        const courses = await res.json();
+        
+        const courseSelect = document.getElementById('selected-course');
+        const adminCourseSelect = document.getElementById('admin-course-select');
+        
+        courseSelect.innerHTML = '';
+        adminCourseSelect.innerHTML = '';
 
-        <table id="curator-date-table">
-          <thead>
-            <tr>
-              <th style="width: 20%">Ուսանող</th>
-              <th>1-ին դաս</th>
-              <th>2-րդ դաս</th>
-              <th>3-րդ դաս</th>
-              <th>4-րդ դաս</th>
-              <th>5-րդ դաս</th>
-              <th>6-րդ դաս</th>
-              <th>7-րդ դաս</th>
-              <th>8-րդ դաս</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+        courses.forEach(c => {
+            courseSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+            adminCourseSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+        });
+    }
 
-      <!-- По студентам -->
-      <div id="curator-tab-student" class="hidden" style="margin-top: 15px">
-        <div class="filter-group">
-          <label
-            >Ընտրել Ուսանողին:
-            <select
-              id="curator-student-select"
-              onchange="loadCuratorStudentHistory()"
-              style="width: auto"
-            ></select>
-          </label>
-          <button onclick="loadCuratorStudentHistory()" style="width: auto">
-            Բեռնել Պատմությունը
-          </button>
-        </div>
+    async function handleLogin() {
+        const u = document.getElementById('login-username').value;
+        const p = document.getElementById('login-password').value;
 
-        <table id="curator-history-table">
-          <thead>
-            <tr>
-              <th>Ամսաթիվ</th>
-              <th>Առարկա</th>
-              <th>Դաս №</th>
-              <th>Գնահատական</th>
-              <th>Թեմա</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-
-    <script>
-      let currentUser = null;
-      const gradesOptions = [
-        "—",
-        "Ն",
-        "Բ",
-        "10",
-        "9",
-        "8",
-        "7",
-        "6",
-        "5",
-        "4",
-        "3",
-        "2",
-        "1",
-      ];
-
-      document.getElementById("teacher-date").valueAsDate = new Date();
-      document.getElementById("curator-date").valueAsDate = new Date();
-
-      async function login() {
-        const userVal = document.getElementById("username").value;
-        const passVal = document.getElementById("password").value;
-
-        try {
-          const res = await fetch("/api/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: userVal, password: passVal }),
-          });
-
-          if (res.ok) {
-            currentUser = await res.json();
-            document.getElementById("login-screen").classList.add("hidden");
-
-            if (currentUser.is_curator) {
-              document
-                .getElementById("curator-screen")
-                .classList.remove("hidden");
-              document.getElementById("curator-info").innerText =
-                `${currentUser.full_name}`;
-              document.getElementById("curator-new-username").value =
-                currentUser.username;
-              await initCuratorPanel();
-            } else {
-              document
-                .getElementById("teacher-screen")
-                .classList.remove("hidden");
-              document.getElementById("teacher-info").innerText =
-                `${currentUser.full_name} (${currentUser.subject})`;
-              document.getElementById("new-username").value =
-                currentUser.username;
-              loadTeacherData();
-            }
-          } else {
-            alert("Սխալ մուտքանուն կամ գաղտնաբառ:");
-          }
-        } catch (err) {
-          alert("Սերվերի հետ կապ չկա:");
-        }
-      }
-
-      function logout() {
-        location.reload();
-      }
-
-      function toggleSettings(role = "teacher") {
-        const panel =
-          role === "teacher"
-            ? document.getElementById("settings-panel")
-            : document.getElementById("curator-settings-panel");
-        panel.classList.toggle("hidden");
-      }
-
-      async function updateProfile(role = "teacher") {
-        const uInput =
-          role === "teacher"
-            ? document.getElementById("new-username").value
-            : document.getElementById("curator-new-username").value;
-        const pInput =
-          role === "teacher"
-            ? document.getElementById("new-password").value
-            : document.getElementById("curator-new-password").value;
-
-        const res = await fetch("/api/update_profile", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: currentUser.id,
-            new_username: uInput,
-            new_password: pInput,
-          }),
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username: u, password: p})
         });
 
-        const data = await res.json();
-        alert(data.message);
-        if (data.success) {
-          currentUser.username = uInput;
-          toggleSettings(role);
+        if (!res.ok) {
+            alert('Անվավեր մուտքանուն կամ գաղտնաբառ');
+            return;
         }
-      }
 
-      function getSelectedLessons() {
-        const val = document.getElementById("lesson-pair-select").value;
-        if (val === "9") return [9, null];
-        const parts = val.split("-").map(Number);
-        return [parts[0], parts[1]];
-      }
+        currentUser = await res.json();
+        
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('app-section').style.display = 'block';
 
-      async function loadTeacherData() {
-        const dateStr = document.getElementById("teacher-date").value;
-        const [l1, l2] = getSelectedLessons();
+        document.getElementById('user-display').innerText = `Օգտատեր: ${currentUser.username}`;
+        document.getElementById('role-display').innerText = `Դեր: ${currentUser.role === 'admin' ? 'Ադմինիստրատոր' : 'Դասախոս'}`;
 
-        document.getElementById("th-lesson-1").innerText = `${l1}-րդ դաս`;
-        document.getElementById("label-topic-1").innerText = `${l1}-րդ Դաս:`;
+        if (currentUser.role === 'admin') {
+            document.getElementById('admin-panel').style.display = 'block';
+        }
 
-        if (l2) {
-          document.getElementById("th-lesson-2").classList.remove("hidden");
-          document.getElementById("row-topic-2").classList.remove("hidden");
-          document.getElementById("th-lesson-2").innerText = `${l2}-րդ դաս`;
-          document.getElementById("label-topic-2").innerText = `${l2}-րդ Դաս:`;
+        if (currentUser.is_kursghek) {
+            document.getElementById('kursghek-toggle').style.display = 'block';
+        }
+
+        await fetchCourses();
+        loadJournalData();
+    }
+
+    function switchMode(mode) {
+        currentMode = mode;
+        document.getElementById('mode-teacher-btn').classList.toggle('active', mode === 'teacher');
+        document.getElementById('mode-kursghek-btn').classList.toggle('active', mode === 'kursghek');
+
+        if (mode === 'kursghek') {
+            // В режиме куратора автоматом выбирается его прикрепленный курс
+            document.getElementById('selected-course').value = currentUser.assigned_course_id;
+            document.getElementById('selected-course').disabled = true;
         } else {
-          document.getElementById("th-lesson-2").classList.add("hidden");
-          document.getElementById("row-topic-2").classList.add("hidden");
+            document.getElementById('selected-course').disabled = false;
         }
 
-        // Загрузка тем
-        const t1Res = await fetch(
-          `/api/topic?subject=${encodeURIComponent(currentUser.subject)}&date=${dateStr}&lesson_num=${l1}`,
-        );
-        const t1Data = await t1Res.json();
-        document.getElementById("topic-1").value = t1Data.topic || "";
+        loadJournalData();
+    }
 
-        if (l2) {
-          const t2Res = await fetch(
-            `/api/topic?subject=${encodeURIComponent(currentUser.subject)}&date=${dateStr}&lesson_num=${l2}`,
-          );
-          const t2Data = await t2Res.json();
-          document.getElementById("topic-2").value = t2Data.topic || "";
-        }
+    async function loadJournalData() {
+        const courseId = document.getElementById('selected-course').value;
+        const date = document.getElementById('selected-date').value;
+        const lessons = document.getElementById('selected-lessons').value.split('-');
+
+        if (!courseId) return;
+
+        document.getElementById('th-lesson-1').innerText = `${lessons[0]}-րդ դաս`;
+        document.getElementById('th-lesson-2').innerText = `${lessons[1]}-րդ դաս`;
+
+        // Загрузка студентов
+        const stRes = await fetch(`/api/courses/${courseId}/students`);
+        const students = await stRes.json();
 
         // Загрузка оценок
-        const res = await fetch(
-          `/api/teacher_records?subject=${encodeURIComponent(currentUser.subject)}&date=${dateStr}&l1=${l1}&l2=${l2 || 0}`,
-        );
-        const records = await res.json();
+        const grRes = await fetch(`/api/grades?course_id=${courseId}&date=${date}`);
+        const grades = await grRes.json();
 
-        const tbody = document.querySelector("#grades-table tbody");
-        tbody.innerHTML = "";
+        const tbody = document.getElementById('students-table-body');
+        tbody.innerHTML = '';
 
-        records.forEach((r) => {
-          const [s_id, name, val1, val2] = r;
-          const row = document.createElement("tr");
-          row.dataset.studentId = s_id;
+        students.forEach((st, idx) => {
+            const g1 = grades.find(g => g.student_id === st.id && g.lesson_number == lessons[0])?.grade_value || '';
+            const g2 = grades.find(g => g.student_id === st.id && g.lesson_number == lessons[1])?.grade_value || '';
 
-          let col2Html = l2 ? `<td>${createSelect(val2, 2)}</td>` : "";
-
-          row.innerHTML = `
-            <td style="text-align: left; font-weight: bold;">${name}</td>
-            <td>${createSelect(val1, 1)}</td>
-            ${col2Html}
-          `;
-          tbody.appendChild(row);
+            tbody.innerHTML += `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td><strong>${st.full_name}</strong></td>
+                    <td class="text-center">
+                        <input type="text" class="form-control grade-input d-inline" id="g-${st.id}-${lessons[0]}" value="${g1}" placeholder="-">
+                    </td>
+                    <td class="text-center">
+                        <input type="text" class="form-control grade-input d-inline" id="g-${st.id}-${lessons[1]}" value="${g2}" placeholder="-">
+                    </td>
+                </tr>
+            `;
         });
-      }
+    }
 
-      function createSelect(selectedVal, slotNum) {
-        let html = `<select class="slot-${slotNum}">`;
-        gradesOptions.forEach((opt) => {
-          const sel = opt === selectedVal ? "selected" : "";
-          html += `<option value="${opt}" ${sel}>${opt}</option>`;
-        });
-        html += "</select>";
-        return html;
-      }
+    async function saveAllGrades() {
+        const courseId = document.getElementById('selected-course').value;
+        const date = document.getElementById('selected-date').value;
+        const lessons = document.getElementById('selected-lessons').value.split('-');
 
-      async function saveTopic(slotNum) {
-        const dateStr = document.getElementById("teacher-date").value;
-        const [l1, l2] = getSelectedLessons();
-        const lessonNum = slotNum === 1 ? l1 : l2;
-        const topicVal = document.getElementById(`topic-${slotNum}`).value;
+        const stRes = await fetch(`/api/courses/${courseId}/students`);
+        const students = await stRes.json();
 
-        if (!lessonNum) return;
-
-        await fetch("/api/topic", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            subject: currentUser.subject,
-            date: dateStr,
-            lesson_num: lessonNum,
-            topic: topicVal,
-          }),
-        });
-        alert(`Թեման պահպանվեց (${lessonNum}-րդ դաս):`);
-      }
-
-      async function saveGrades() {
-        const dateStr = document.getElementById("teacher-date").value;
-        const [l1, l2] = getSelectedLessons();
-        const rows = document.querySelectorAll("#grades-table tbody tr");
-
-        for (let row of rows) {
-          const studentId = parseInt(row.dataset.studentId);
-          const val1 = row.querySelector(".slot-1").value;
-
-          await fetch("/api/save_record", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              student_id: studentId,
-              subject: currentUser.subject,
-              date: dateStr,
-              lesson_num: l1,
-              value: val1,
-            }),
-          });
-
-          if (l2) {
-            const val2 = row.querySelector(".slot-2").value;
-            await fetch("/api/save_record", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                student_id: studentId,
-                subject: currentUser.subject,
-                date: dateStr,
-                lesson_num: l2,
-                value: val2,
-              }),
-            });
-          }
+        for (let st of students) {
+            for (let l of lessons) {
+                const val = document.getElementById(`g-${st.id}-${l}`).value.trim();
+                if (val !== '') {
+                    await fetch('/api/grades', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            student_id: st.id,
+                            teacher_id: currentUser.user_id,
+                            course_id: parseInt(courseId),
+                            lesson_number: parseInt(l),
+                            grade_value: val,
+                            date: date
+                        })
+                    });
+                }
+            }
         }
-        alert("Գնահատականները պահպանված են:");
-      }
+        alert('Գնահատականները պահպանված են:');
+    }
 
-      async function initCuratorPanel() {
-        const resSt = await fetch("/api/students");
-        const students = await resSt.json();
-        const selectSt = document.getElementById("curator-student-select");
-        selectSt.innerHTML = "";
+    async function addStudent() {
+        const name = document.getElementById('admin-student-name').value;
+        const courseId = document.getElementById('admin-course-select').value;
 
-        students.forEach((s) => {
-          const opt = document.createElement("option");
-          opt.value = s[0];
-          opt.innerText = s[1];
-          selectSt.appendChild(opt);
+        if (!name) return alert('Մուտքագրեք անունը');
+
+        await fetch('/api/admin/students', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({full_name: name, course_id: parseInt(courseId)})
         });
 
-        const resSub = await fetch("/api/subjects");
-        const subjects = await resSub.json();
-        const subjSelect = document.getElementById("curator-subject-select");
-        subjSelect.innerHTML = '<option value="">Ընտրել առարկան</option>';
+        document.getElementById('admin-student-name').value = '';
+        loadJournalData();
+    }
 
-        subjects.forEach((sub) => {
-          const opt = document.createElement("option");
-          opt.value = sub;
-          opt.innerText = sub;
-          subjSelect.appendChild(opt);
+    async function importExcel() {
+        const fileInput = document.getElementById('admin-file-import');
+        const courseId = document.getElementById('admin-course-select').value;
+        if (!fileInput.files[0]) return;
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        await fetch(`/api/admin/import-students?course_id=${courseId}`, {
+            method: 'POST',
+            body: formData
         });
-      }
 
-      function switchCuratorTab(tab) {
-        if (tab === "date") {
-          document
-            .getElementById("curator-tab-date")
-            .classList.remove("hidden");
-          document
-            .getElementById("curator-tab-student")
-            .classList.add("hidden");
-          document.getElementById("btn-tab-date").classList.add("active");
-          document.getElementById("btn-tab-student").classList.remove("active");
-        } else {
-          document.getElementById("curator-tab-date").classList.add("hidden");
-          document
-            .getElementById("curator-tab-student")
-            .classList.remove("hidden");
-          document.getElementById("btn-tab-date").classList.remove("active");
-          document.getElementById("btn-tab-student").classList.add("active");
-          loadCuratorStudentHistory();
-        }
-      }
+        alert('Ֆայլը հաջողությամբ ներմուծված է:');
+        loadJournalData();
+    }
 
-      async function loadCuratorByDate() {
-        const dateStr = document.getElementById("curator-date").value;
-        const subjectStr = document.getElementById(
-          "curator-subject-select",
-        ).value;
-
-        if (!subjectStr) {
-          document.querySelector("#curator-date-table tbody").innerHTML = "";
-          return;
-        }
-
-        const res = await fetch(
-          `/api/curator/by_date?date=${dateStr}&subject=${encodeURIComponent(subjectStr)}`,
-        );
-        const records = await res.json();
-
-        const tbody = document.querySelector("#curator-date-table tbody");
-        tbody.innerHTML = "";
-
-        records.forEach((r) => {
-          const row = document.createElement("tr");
-          let cells = `<td style="text-align: left; font-weight: bold;">${r.student_name}</td>`;
-
-          r.lessons.forEach((val) => {
-            const badgeClass = val !== "—" ? "curator-badge" : "";
-            cells += `<td><span class="${badgeClass}">${val}</span></td>`;
-          });
-
-          row.innerHTML = cells;
-          tbody.appendChild(row);
-        });
-      }
-
-      async function loadCuratorStudentHistory() {
-        const studentId = document.getElementById(
-          "curator-student-select",
-        ).value;
-        if (!studentId) return;
-
-        const res = await fetch(`/api/curator/student_history/${studentId}`);
-        const history = await res.json();
-
-        const tbody = document.querySelector("#curator-history-table tbody");
-        tbody.innerHTML = "";
-
-        if (history.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5">Տվյալներ չկան</td></tr>';
-          return;
-        }
-
-        history.forEach((h) => {
-          // h = [date, subject, lesson_num, value, topic]
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${h[0]}</td>
-            <td>${h[1]}</td>
-            <td>${h[2]}-րդ դաս</td>
-            <td><b>${h[3]}</b></td>
-            <td style="text-align: left;">${h[4] || "—"}</td>
-          `;
-          tbody.appendChild(row);
-        });
-      }
-    </script>
-  </body>
+    function handleLogout() {
+        location.reload();
+    }
+</script>
+</body>
 </html>
