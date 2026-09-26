@@ -1,9 +1,9 @@
 fastapi
 uvicorn
+psycopg[binary]
 psycopg2-binary
 sqlalchemy
 pandas
 openpyxl
 python-multipart
 passlib[bcrypt]
- 
