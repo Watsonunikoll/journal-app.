@@ -1,230 +1,84 @@
+import os
 import sqlite3
-import hashlib
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DateTime, Text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
+from datetime import datetime
 
-DB_NAME = "journal.db"
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+# Авто-коррекция схемы подключения для SQLAlchemy
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+if DATABASE_URL:
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+else:
+    # Фоллбэк на локальный SQLite для локальных тестов
+    engine = create_engine("sqlite:///journal.db", connect_args={"check_same_thread": False})
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_order=True, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    password = Column(String, nullable=False)
+    role = Column(String, nullable=False) # 'admin', 'teacher'
+    is_kursghek = Column(Integer, default=0) # 1 если является Կուրսղեկ
+    assigned_course_id = Column(Integer, ForeignKey("courses.id"), nullable=True) # Курс для Կուրսղեկ
+
+class Course(Base):
+    __tablename__ = "courses"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+
+class Student(Base):
+    __tablename__ = "students"
+    id = Column(Integer, primary_key=True, index=True)
+    full_name = Column(String, nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+
+class Grade(Base):
+    __tablename__ = "grades"
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=False)
+    teacher_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    lesson_number = Column(Integer, nullable=False) # 1..8
+    grade_value = Column(String, nullable=False) # 1..10, 'Բ', 'Հ'
+    date = Column(String, nullable=False) # YYYY-MM-DD
 
 def init_db():
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            full_name TEXT NOT NULL,
-            subject TEXT,
-            is_curator BOOLEAN DEFAULT 0
-        )
-    ''')
-
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS students (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            full_name TEXT NOT NULL
-        )
-    ''')
-
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS records (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id INTEGER NOT NULL,
-            subject TEXT NOT NULL,
-            date TEXT NOT NULL,
-            lesson_num INTEGER DEFAULT 1,
-            value TEXT NOT NULL,
-            FOREIGN KEY (student_id) REFERENCES students (id)
-        )
-    ''')
-
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS lesson_topics (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            subject TEXT NOT NULL,
-            date TEXT NOT NULL,
-            lesson_num INTEGER NOT NULL,
-            topic TEXT NOT NULL,
-            UNIQUE(subject, date, lesson_num)
-        )
-    ''')
-
-    cursor.execute("SELECT COUNT(*) FROM users")
-    if cursor.fetchone()[0] == 0:
-        cursor.execute('''
-            INSERT INTO users (username, password, full_name, subject, is_curator)
-            VALUES (?, ?, ?, ?, ?)
-        ''', ("curator", hash_password("curator1234"), "Կուրատոր (Куратор)", "Համ. օպեր.", 1))
-
-        teachers_def = [
-            ("math", "Բարձր. մաթեմ.", "math7492"),
-            ("market", "Մարքեթինգ", "market3184"),
-            ("armenian", "Հայոց լեզու", "armenian5920"),
-            ("history", "Պատմություն", "history8314"),
-            ("pe", "Ֆիզկուլտ", "pe4019"),
-            ("biz", "Աշխ. գործ. ընդ.", "biz6723"),
-            ("os", "Համ. օպեր.", "os1954"),
-            ("english", "Օտար լեզու", "english9041"),
-            ("russian", "Ռուսաց լեզու", "russian2835"),
-            ("econ", "Կիրառ. տնտ.", "econ5162"),
-        ]
-
-        for username, subject_name, default_pwd in teachers_def:
-            full_title = f"Ուսուցիչ ({subject_name})"
-            cursor.execute('''
-                INSERT INTO users (username, password, full_name, subject, is_curator)
-                VALUES (?, ?, ?, ?, 0)
-            ''', (username, hash_password(default_pwd), full_title, subject_name))
-
-        for i in range(1, 20):
-            cursor.execute("INSERT INTO students (full_name) VALUES (?)", (f"Ուսանող {i}",))
-
-    conn.commit()
-    conn.close()
-
-def authenticate_user(username, password):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT id, username, full_name, subject, is_curator FROM users WHERE username = ? AND password = ?",
-        (username, hash_password(password))
-    )
-    user = cursor.fetchone()
-    conn.close()
-    return user
-
-def update_user_credentials(user_id, new_username, new_password):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    try:
-        if new_password and new_password.strip():
-            hashed = hash_password(new_password)
-            cursor.execute("UPDATE users SET username = ?, password = ? WHERE id = ?", (new_username, hashed, user_id))
-        else:
-            cursor.execute("UPDATE users SET username = ? WHERE id = ?", (new_username, user_id))
-        conn.commit()
-        conn.close()
-        return True, "Տվյալները հաջողությամբ թարմացվել են:"
-    except sqlite3.IntegrityError:
-        conn.close()
-        return False, "Այս մուտքանունն արդեն զբաղված է:"
-    except Exception as e:
-        conn.close()
-        return False, str(e)
-
-def get_all_students():
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, full_name FROM students")
-    students = cursor.fetchall()
-    conn.close()
-    return students
-
-def get_all_subjects():
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT subject FROM users WHERE is_curator = 0 AND subject IS NOT NULL")
-    subjects = [row[0] for row in cursor.fetchall()]
-    conn.close()
-    return subjects
-
-def add_or_update_record(student_id, subject, date_str, lesson_num, value):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
     
-    cursor.execute('''
-        SELECT id FROM records WHERE student_id = ? AND subject = ? AND date = ? AND lesson_num = ?
-    ''', (student_id, subject, date_str, lesson_num))
-    existing = cursor.fetchone()
+    # 1. Создаем 30 курсов, если их еще нет
+    if db.query(Course).count() == 0:
+        for i in range(1, 31):
+            db.add(Course(id=i, name=f"{i}-րդ կուրս"))
+        db.commit()
 
-    if existing:
-        cursor.execute('UPDATE records SET value = ? WHERE id = ?', (value, existing[0]))
-    else:
-        cursor.execute('INSERT INTO records (student_id, subject, date, lesson_num, value) VALUES (?, ?, ?, ?, ?)', 
-                       (student_id, subject, date_str, lesson_num, value))
+    # 2. Аккаунт администратора
+    admin = db.query(User).filter_by(username="admin").first()
+    if not admin:
+        db.add(User(username="admin", password="admin123", role="admin"))
+        db.commit()
 
-    conn.commit()
-    conn.close()
+    # 3. 30 Преподавателей + привязка режима Կուրսղեկ
+    if db.query(User).filter(User.role == "teacher").count() == 0:
+        for i in range(1, 31):
+            db.add(User(
+                username=f"teacher{i}",
+                password="password123",
+                role="teacher",
+                is_kursghek=1,
+                assigned_course_id=i
+            ))
+        db.commit()
 
-def get_teacher_records_for_date(subject, date_str, lesson1_num, lesson2_num):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT s.id, s.full_name,
-               MAX(CASE WHEN r.lesson_num = ? THEN r.value END) as l1,
-               MAX(CASE WHEN r.lesson_num = ? THEN r.value END) as l2
-        FROM students s
-        LEFT JOIN records r ON s.id = r.student_id AND r.date = ? AND r.subject = ?
-        GROUP BY s.id, s.full_name
-        ORDER BY s.id
-    ''', (lesson1_num, lesson2_num, date_str, subject))
-    data = cursor.fetchall()
-    conn.close()
-    return data
+    db.close()
 
-def get_curator_grid_by_date(date_str, subject):
-    """Возвращает всех 19 студентов и их оценки по 8 урокам на выбранную дату."""
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT s.id, s.full_name,
-               MAX(CASE WHEN r.lesson_num = 1 THEN r.value END) as l1,
-               MAX(CASE WHEN r.lesson_num = 2 THEN r.value END) as l2,
-               MAX(CASE WHEN r.lesson_num = 3 THEN r.value END) as l3,
-               MAX(CASE WHEN r.lesson_num = 4 THEN r.value END) as l4,
-               MAX(CASE WHEN r.lesson_num = 5 THEN r.value END) as l5,
-               MAX(CASE WHEN r.lesson_num = 6 THEN r.value END) as l6,
-               MAX(CASE WHEN r.lesson_num = 7 THEN r.value END) as l7,
-               MAX(CASE WHEN r.lesson_num = 8 THEN r.value END) as l8
-        FROM students s
-        LEFT JOIN records r ON s.id = r.student_id AND r.date = ? AND r.subject = ?
-        GROUP BY s.id, s.full_name
-        ORDER BY s.id
-    ''', (date_str, subject))
-    rows = cursor.fetchall()
-    conn.close()
-
-    result = []
-    for row in rows:
-        result.append({
-            "student_id": row[0],
-            "student_name": row[1],
-            "lessons": [row[i] if row[i] is not None else "—" for i in range(2, 10)]
-        })
-    return result
-
-def get_student_history(student_id):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT r.date, r.subject, r.lesson_num, r.value, COALESCE(t.topic, '') as topic
-        FROM records r
-        LEFT JOIN lesson_topics t ON r.subject = t.subject AND r.date = t.date AND r.lesson_num = t.lesson_num
-        WHERE r.student_id = ? AND r.value != '—'
-        ORDER BY r.date DESC, r.subject, r.lesson_num
-    ''', (student_id,))
-    data = cursor.fetchall()
-    conn.close()
-    return data
-
-def save_topic(subject, date, lesson_num, topic):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO lesson_topics (subject, date, lesson_num, topic)
-        VALUES (?, ?, ?, ?)
-        ON CONFLICT(subject, date, lesson_num) 
-        DO UPDATE SET topic = excluded.topic
-    ''', (subject, date, lesson_num, topic))
-    conn.commit()
-    conn.close()
-
-def get_topic(subject, date, lesson_num):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("SELECT topic FROM lesson_topics WHERE subject = ? AND date = ? AND lesson_num = ?", (subject, date, lesson_num))
-    row = cursor.fetchone()
-    conn.close()
-    return row[0] if row else ""
+if __name__ == "__main__":
+    init_db()
