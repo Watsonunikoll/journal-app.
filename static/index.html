@@ -14,6 +14,7 @@
         .stat-card { border-left: 4px solid #0d6efd; background: #fff; padding: 15px; border-radius: 8px; }
         .table-kursghek th, .table-kursghek td { text-align: center; vertical-align: middle; }
         .table-kursghek td:nth-child(2) { text-align: left; }
+        .scroll-feed { max-height: 400px; overflow-y: auto; padding-right: 5px; }
         @media print {
             #login-section, .no-print, button { display: none !important; }
             .card-custom { box-shadow: none !important; border: 1px solid #ccc !important; }
@@ -199,11 +200,59 @@
             </div>
         </div>
 
-        <!-- РЕЖИМ 2: Настоящий Режим Куратора (Сводный журнал всех 30 студентов x 8 уроков) -->
+        <!-- РЕЖИМ 2: Настоящий Режим Куратора -->
         <div id="kursghek-view" style="display: none;">
+            
+            <!-- БЛОК 1: Персональный анализ конкретного студента -->
+            <div class="card card-custom p-4 mb-4 border-primary">
+                <h5 class="text-primary mb-3">👤 Ուսանողի Անհատական Վերլուծություն</h5>
+                
+                <div class="row g-3 mb-3 no-print">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Ընտրել Ուսանողին:</label>
+                        <select id="kursghek-student-select" class="form-select form-select-lg" onchange="loadStudentPersonalData()">
+                            <option value="">-- Ընտրեք ուսանողին --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button onclick="openFullGradesModal()" class="btn btn-primary btn-lg w-100">
+                            📋 Ընդհանուր Գնահատականներ (Առանձին Աղյուսակ)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Краткие карточки оценок выбранного студента -->
+                <div id="student-summary-box" style="display: none;">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="stat-card">
+                                <h6 class="text-muted mb-2">Բացակայություններ (Пропуски)</h6>
+                                <div class="d-flex gap-4 fs-5">
+                                    <div><strong>Անհարգելի (Բ):</strong> <span id="stat-b-count" class="badge bg-danger">0</span></div>
+                                    <div><strong>Հարգելի (Հ):</strong> <span id="stat-h-count" class="badge bg-warning text-dark">0</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="stat-card" style="border-left-color: #198754;">
+                                <h6 class="text-muted mb-2">Գնահատականների Քանակ</h6>
+                                <div id="stat-grades-summary" class="d-flex flex-wrap gap-2 fw-bold"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Скролл-лента последних оценок -->
+                    <h6 class="fw-bold mt-3 mb-2">Վերջին Գնահատականների Ժամանակագրություն (Սկրոլ):</h6>
+                    <div id="student-scroll-feed" class="scroll-feed list-group">
+                        <!-- Динамический скролл -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- БЛОК 2: Сводный журнал всех 30 студентов x 8 уроков -->
             <div class="card card-custom p-4 mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-                    <h4 class="m-0 text-primary">Կուրսղեկի Վահանակ (Ամբողջական Մատյան)</h4>
+                    <h4 class="m-0 text-primary">Կուրսի Ընդհանուր Մատյան (Բոլոր Ուսանողները)</h4>
                     <div class="d-flex gap-2">
                         <button onclick="window.print()" class="btn btn-secondary">🖨️ Տպել / PDF</button>
                         <button onclick="downloadExcel()" class="btn btn-success">⬇️ Excel (.xlsx)</button>
@@ -217,7 +266,7 @@
                         <input type="date" id="kursghek-date" class="form-control form-control-lg" onchange="loadKursghekFullTable()">
                     </div>
                     <div class="col-md-9 text-end">
-                        <span class="badge bg-info text-dark p-2 fs-6">Ցուցադրված են կուրսի բոլոր ուսանողները</span>
+                        <span class="badge bg-info text-dark p-2 fs-6">Ցուցադրված են կուրսի բոլոր 30 ուսանողները</span>
                     </div>
                 </div>
 
@@ -251,7 +300,35 @@
 
 </div>
 
-<!-- Модалка выбора оценок (БЕЗ серого крестика) -->
+<!-- Модалка полной таблицы оценок выбранного студента -->
+<div class="modal fade" id="fullGradesModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="fullGradesModalTitle">Ուսանողի Ամբողջական Գնահատականները</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Առարկա</th>
+                        <th>Ամսաթիվ</th>
+                        <th>Դաս №</th>
+                        <th>Գնահատական</th>
+                        <th>Դասախոս</th>
+                    </tr>
+                </thead>
+                <tbody id="full-grades-tbody"></tbody>
+            </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Модалка выбора оценок -->
 <div class="modal fade" id="gradeModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content">
@@ -282,7 +359,9 @@
     let currentUser = null;
     let activeCellId = null;
     let gradeModal = null;
+    let fullGradesModal = null;
     let isKursghekMode = false;
+    let rawKursghekAllGrades = [];
 
     const todayStr = new Date().toISOString().split('T')[0];
     document.getElementById('selected-date').value = todayStr;
@@ -302,6 +381,7 @@
 
         currentUser = await res.json();
         gradeModal = new bootstrap.Modal(document.getElementById('gradeModal'));
+        fullGradesModal = new bootstrap.Modal(document.getElementById('fullGradesModal'));
 
         document.getElementById('login-section').style.display = 'none';
         document.getElementById('app-section').style.display = 'block';
@@ -333,6 +413,7 @@
             btn.classList.replace('btn-outline-primary', 'btn-primary');
             tView.style.display = 'none';
             kView.style.display = 'block';
+            loadKursghekStudentsList();
             loadKursghekFullTable();
         } else {
             btn.innerText = 'Կուրսղեկի Ռեժիմ';
@@ -458,16 +539,125 @@
         alert('Պահպանված է:');
     }
 
-    // ПОЛНЫЙ СВОДНЫЙ РЕЖИМ КУРАТОРА: 30 СТУДЕНТОВ x 8 ЯЧЕЕК ОЦЕНОК
+    // РЕЖИМ КУРАТОРА
+    async function loadKursghekStudentsList() {
+        const courseId = currentUser.assigned_course_id || 1;
+        const stRes = await fetch(`/api/courses/${courseId}/students`);
+        const students = await stRes.json();
+
+        const sel = document.getElementById('kursghek-student-select');
+        sel.innerHTML = '<option value="">-- Ընտրեք ուսանողին --</option>';
+        students.forEach(st => {
+            sel.innerHTML += `<option value="${st.id}">${st.full_name}</option>`;
+        });
+
+        // Загружаем все оценки курса для персонального анализа
+        const res = await fetch(`/api/kursghek/all-grades?course_id=${courseId}`);
+        rawKursghekAllGrades = await res.json();
+    }
+
+    function loadStudentPersonalData() {
+        const stId = document.getElementById('kursghek-student-select').value;
+        const summaryBox = document.getElementById('student-summary-box');
+
+        if (!stId) {
+            summaryBox.style.display = 'none';
+            return;
+        }
+
+        const studentGrades = rawKursghekAllGrades.filter(g => g.student_id == stId || g.student_name === getSelectedStudentName());
+
+        let bCount = 0;
+        let hCount = 0;
+        let gradeCounts = {};
+
+        studentGrades.forEach(g => {
+            const val = g.grade_value;
+            if (val === 'Բ') bCount++;
+            else if (val === 'Հ') hCount++;
+            else {
+                gradeCounts[val] = (gradeCounts[val] || 0) + 1;
+            }
+        });
+
+        document.getElementById('stat-b-count').innerText = bCount;
+        document.getElementById('stat-h-count').innerText = hCount;
+
+        const summaryDiv = document.getElementById('stat-grades-summary');
+        summaryDiv.innerHTML = '';
+        Object.keys(gradeCounts).sort((a,b) => b - a).forEach(gVal => {
+            summaryDiv.innerHTML += `<span class="badge bg-light text-dark border p-2">${gVal} : ${gradeCounts[gVal]} հատ</span>`;
+        });
+
+        // Формируем скролл-ленту
+        const feedDiv = document.getElementById('student-scroll-feed');
+        feedDiv.innerHTML = '';
+
+        if (studentGrades.length === 0) {
+            feedDiv.innerHTML = '<div class="list-group-item text-muted text-center">Գնահատականներ չկան</div>';
+        } else {
+            studentGrades.forEach(g => {
+                let badgeClass = 'bg-primary';
+                if (g.grade_value === 'Բ') badgeClass = 'bg-danger';
+                if (g.grade_value === 'Հ') badgeClass = 'bg-warning text-dark';
+
+                feedDiv.innerHTML += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${g.subject_name || 'Առարկա'}</strong>
+                            <div class="small text-muted">${g.date} | Դաս ${g.lesson_number}</div>
+                        </div>
+                        <span class="badge ${badgeClass} fs-6 p-2 px-3">${g.grade_value}</span>
+                    </div>
+                `;
+            });
+        }
+
+        summaryBox.style.display = 'block';
+    }
+
+    function openFullGradesModal() {
+        const stId = document.getElementById('kursghek-student-select').value;
+        if (!stId) return alert('Խնդրում ենք նախ ընտրել ուսանողին');
+
+        const studentName = getSelectedStudentName();
+        document.getElementById('fullGradesModalTitle').innerText = `Գնահատականներ: ${studentName}`;
+
+        const studentGrades = rawKursghekAllGrades.filter(g => g.student_id == stId || g.student_name === studentName);
+        const tbody = document.getElementById('full-grades-tbody');
+        tbody.innerHTML = '';
+
+        if (studentGrades.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Տվյալներ չկան</td></tr>';
+        } else {
+            studentGrades.forEach(row => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${row.subject_name || 'Առարկա'}</strong></td>
+                        <td>${row.date}</td>
+                        <td>Դաս ${row.lesson_number}</td>
+                        <td><span class="badge ${row.grade_value === 'Բ' ? 'bg-danger' : 'bg-primary'} fs-6">${row.grade_value}</span></td>
+                        <td>${row.teacher_name || '-'}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        fullGradesModal.show();
+    }
+
+    function getSelectedStudentName() {
+        const sel = document.getElementById('kursghek-student-select');
+        return sel.options[sel.selectedIndex].text;
+    }
+
     async function loadKursghekFullTable() {
         const courseId = currentUser.assigned_course_id || 1;
         const date = document.getElementById('kursghek-date').value;
 
-        // 1. Получаем абсолютно всех студентов курса (все 30 челов)
         const stRes = await fetch(`/api/courses/${courseId}/students`);
         const students = await stRes.json();
 
-        // 2. Получаем все оценки за выбранную дату
         const grRes = await fetch(`/api/grades?course_id=${courseId}&date=${date}`);
         const grades = await grRes.json();
 
@@ -479,7 +669,6 @@
                 <td>${idx + 1}</td>
                 <td><strong>${st.full_name}</strong></td>`;
 
-            // Генерируем 8 ячеек для уроков с 1 по 8
             for (let lesson = 1; lesson <= 8; lesson++) {
                 const foundGrade = grades.find(g => g.student_id === st.id && g.lesson_number === lesson);
                 const val = foundGrade ? foundGrade.grade_value : '-';
