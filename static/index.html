@@ -11,6 +11,13 @@
         .grade-btn-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
         .cell-grade { cursor: pointer; text-align: center; font-weight: bold; min-width: 45px; background: #fff; }
         .cell-grade:hover { background: #e9ecef; }
+        .stat-card { border-left: 4px solid #0d6efd; background: #fff; padding: 15px; border-radius: 8px; }
+        .subject-card { cursor: pointer; transition: all 0.2s; }
+        .subject-card:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        @media print {
+            #login-section, .no-print, button { display: none !important; }
+            .card-custom { box-shadow: none !important; border: 1px solid #ccc !important; }
+        }
     </style>
 </head>
 <body>
@@ -39,21 +46,21 @@
     <div id="app-section" style="display: none;">
         
         <!-- Шапка -->
-        <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded card-custom">
+        <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded card-custom no-print">
             <div>
                 <h5 class="m-0" id="user-display"></h5>
                 <small class="text-muted" id="role-display"></small>
             </div>
             <div class="d-flex gap-2">
-                <div id="kursghek-toggle" style="display: none;">
-                    <button class="btn btn-outline-success" onclick="toggleAllGradesModal()">Ընդհանուր գնահատականներ</button>
+                <div id="kursghek-toggle-btn" style="display: none;">
+                    <button class="btn btn-outline-primary" id="mode-btn" onclick="switchMode()">Կուրսղեկի Ռեժիմ</button>
                 </div>
                 <button onclick="location.reload()" class="btn btn-danger btn-sm">Ելք</button>
             </div>
         </div>
 
         <!-- АԴՄԻՆ ՊԱՆԵԼ -->
-        <div id="admin-panel" class="card card-custom p-4 mb-4" style="display: none;">
+        <div id="admin-panel" class="card card-custom p-4 mb-4 no-print" style="display: none;">
             <h5 class="text-danger mb-3">Ադմինիստրատորի Պանել (Կառավարում)</h5>
             
             <ul class="nav nav-tabs mb-3" id="adminTab" role="tablist">
@@ -146,50 +153,109 @@
             </div>
         </div>
 
-        <!-- Фильтры Учителя -->
-        <div id="teacher-filters" class="card card-custom p-3 mb-4">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label">Ամսաթիվ:</label>
-                    <input type="date" id="selected-date" class="form-control" onchange="loadJournalData()">
+        <!-- РЕЖИМ 1: Обычный Журнал Учителя -->
+        <div id="teacher-view">
+            <!-- Фильтры Учителя -->
+            <div class="card card-custom p-3 mb-4 no-print">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Ամսաթիվ:</label>
+                        <input type="date" id="selected-date" class="form-control" onchange="loadJournalData()">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Ընտրել Կուրսը:</label>
+                        <select id="selected-course" class="form-select" onchange="loadJournalData()"></select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Ընտրել Առարկան:</label>
+                        <select id="selected-subject" class="form-select" onchange="loadJournalData()"></select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Դասերի Զույգը:</label>
+                        <select id="selected-lessons" class="form-select" onchange="loadJournalData()">
+                            <option value="1-2">1-ին և 2-րդ դաս</option>
+                            <option value="3-4">3-րդ և 4-րդ դաս</option>
+                            <option value="5-6">5-րդ և 6-րդ դաս</option>
+                            <option value="7-8">7-րդ և 8-րդ դաս</option>
+                            <option value="9">9-րդ դաս</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label">Ընտրել Կուրսը:</label>
-                    <select id="selected-course" class="form-select" onchange="loadJournalData()"></select>
+            </div>
+
+            <!-- Сетка Журнала -->
+            <div class="card card-custom p-4">
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Ուսանող</th>
+                                <th class="text-center" id="th-l1">Դաս 1</th>
+                                <th class="text-center" id="th-l2">Դաս 2</th>
+                            </tr>
+                        </thead>
+                        <tbody id="students-table-body"></tbody>
+                    </table>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label">Ընտրել Առարկան:</label>
-                    <select id="selected-subject" class="form-select" onchange="loadJournalData()"></select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Դասերի Զույգը:</label>
-                    <select id="selected-lessons" class="form-select" onchange="loadJournalData()">
-                        <option value="1-2">1-ին և 2-րդ դաս</option>
-                        <option value="3-4">3-րդ և 4-րդ դաս</option>
-                        <option value="5-6">5-րդ և 6-րդ դաս</option>
-                        <option value="7-8">7-րդ և 8-րդ դաս</option>
-                        <option value="9">9-րդ դաս</option>
-                    </select>
-                </div>
+                <button onclick="saveGrades()" class="btn btn-primary mt-3 px-4 no-print">Պահպանել Գնահատականները</button>
             </div>
         </div>
 
-        <!-- Сетка Журнала -->
-        <div id="journal-view" class="card card-custom p-4">
-            <div class="table-responsive">
-                <table class="table table-bordered align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>#</th>
-                            <th>Ուսանող</th>
-                            <th class="text-center" id="th-l1">Դաս 1</th>
-                            <th class="text-center" id="th-l2">Դաս 2</th>
-                        </tr>
-                    </thead>
-                    <tbody id="students-table-body"></tbody>
-                </table>
+        <!-- РЕЖИМ 2: Полноценная Панель Куратора -->
+        <div id="kursghek-view" style="display: none;">
+            <div class="card card-custom p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+                    <h4 class="m-0 text-primary">Կուրսղեկի Վերլուծական Վահանակ</h4>
+                    <div class="d-flex gap-2">
+                        <button onclick="window.print()" class="btn btn-secondary">🖨️ Տպել / PDF</button>
+                        <button onclick="downloadExcel()" class="btn btn-success">⬇️ Excel (.xlsx)</button>
+                    </div>
+                </div>
+
+                <!-- Краткая сводка (Пропуски и Оценки) -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="stat-card">
+                            <h6 class="text-muted mb-2">Բացակայությունների Ընդհանուր Քանակ (Пропуски)</h6>
+                            <div class="d-flex gap-4 fs-5">
+                                <div><strong>Անհարգելի (Բ):</strong> <span id="stat-b-count" class="badge bg-danger">0</span></div>
+                                <div><strong>Հարգելի (Հ):</strong> <span id="stat-h-count" class="badge bg-warning text-dark">0</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="stat-card" style="border-left-color: #198754;">
+                            <h6 class="text-muted mb-2">Գնահատականների Ամփոփում (Количество оценок)</h6>
+                            <div id="stat-grades-summary" class="d-flex flex-wrap gap-2 fw-bold"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Список предметов с краткой статистикой -->
+                <h5 class="mb-3">Ըստ Առարկաների (Кликни на предмет для деталей):</h5>
+                <div class="row g-3 mb-4" id="subjects-summary-cards"></div>
+
+                <!-- Детальная таблица по датам при выборе предмета -->
+                <div id="detailed-subject-section" style="display: none;">
+                    <hr class="my-4">
+                    <h5 id="selected-subject-title" class="text-success mb-3"></h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Ամսաթիվ</th>
+                                    <th>Ուսանող</th>
+                                    <th>Դաս №</th>
+                                    <th>Գնահատական / Նշում</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailed-subject-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
-            <button onclick="saveGrades()" class="btn btn-primary mt-3 px-4">Պահպանել Գնահատականները</button>
         </div>
 
     </div>
@@ -223,43 +289,13 @@
   </div>
 </div>
 
-<!-- Модалка Ընդհանուր գնահատականներ (Куратор) -->
-<div class="modal fade" id="allGradesModal" tabindex="-1">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Ընդհանուր Գնահատականների Ցանկ (Կուրսղեկ)</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div class="d-flex justify-content-end mb-3">
-            <button onclick="downloadExcel()" class="btn btn-success">⬇️ Բեռնել Excel (.xlsx)</button>
-        </div>
-        <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
-            <table class="table table-striped align-middle">
-                <thead>
-                    <tr>
-                        <th>Ամսաթիվ</th>
-                        <th>Ուսանող</th>
-                        <th>Առարկա</th>
-                        <th>Դաս №</th>
-                        <th>Գնահատական</th>
-                    </tr>
-                </thead>
-                <tbody id="kursghek-table-body"></tbody>
-            </table>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     let currentUser = null;
     let activeCellId = null;
     let gradeModal = null;
-    let allGradesModal = null;
+    let isKursghekMode = false;
+    let rawKursghekData = [];
 
     document.getElementById('selected-date').valueAsDate = new Date();
 
@@ -277,7 +313,6 @@
 
         currentUser = await res.json();
         gradeModal = new bootstrap.Modal(document.getElementById('gradeModal'));
-        allGradesModal = new bootstrap.Modal(document.getElementById('allGradesModal'));
 
         document.getElementById('login-section').style.display = 'none';
         document.getElementById('app-section').style.display = 'block';
@@ -289,12 +324,33 @@
             document.getElementById('admin-panel').style.display = 'block';
             loadAdminTeachers();
         }
+
         if (currentUser.is_kursghek) {
-            document.getElementById('kursghek-toggle').style.display = 'block';
+            document.getElementById('kursghek-toggle-btn').style.display = 'block';
         }
 
         await loadCoursesAndSubjects();
         loadJournalData();
+    }
+
+    function switchMode() {
+        isKursghekMode = !isKursghekMode;
+        const btn = document.getElementById('mode-btn');
+        const tView = document.getElementById('teacher-view');
+        const kView = document.getElementById('kursghek-view');
+
+        if (isKursghekMode) {
+            btn.innerText = 'Դասախոսի Ռեժիմ';
+            btn.classList.replace('btn-outline-primary', 'btn-primary');
+            tView.style.display = 'none';
+            kView.style.display = 'block';
+            loadKursghekAnalytics();
+        } else {
+            btn.innerText = 'Կուրսղեկի Ռեժիմ';
+            btn.classList.replace('btn-primary', 'btn-outline-primary');
+            kView.style.display = 'none';
+            tView.style.display = 'block';
+        }
     }
 
     async function loadCoursesAndSubjects() {
@@ -413,30 +469,100 @@
         alert('Գնահատականները պահպանված են:');
     }
 
-    async function toggleAllGradesModal() {
-        const res = await fetch(`/api/kursghek/all-grades?course_id=${currentUser.assigned_course_id || 1}`);
-        const data = await res.json();
-        const tbody = document.getElementById('kursghek-table-body');
+    // АНАЛИТИКА КУРАТОРА
+    async function loadKursghekAnalytics() {
+        const courseId = currentUser.assigned_course_id || 1;
+        const res = await fetch(`/api/kursghek/all-grades?course_id=${courseId}`);
+        rawKursghekData = await res.json();
+
+        let bCount = 0;
+        let hCount = 0;
+        let gradeCounts = {};
+        let subjectStats = {};
+
+        rawKursghekData.forEach(g => {
+            const val = g.grade_value;
+            const subj = g.subject_name;
+
+            if (val === 'Բ') bCount++;
+            else if (val === 'Հ') hCount++;
+            else {
+                gradeCounts[val] = (gradeCounts[val] || 0) + 1;
+            }
+
+            if (!subjectStats[subj]) {
+                subjectStats[subj] = { b: 0, h: 0, grades: {}, list: [] };
+            }
+
+            if (val === 'Բ') subjectStats[subj].b++;
+            else if (val === 'Հ') subjectStats[subj].h++;
+            else {
+                subjectStats[subj].grades[val] = (subjectStats[subj].grades[val] || 0) + 1;
+            }
+            subjectStats[subj].list.push(g);
+        });
+
+        document.getElementById('stat-b-count').innerText = bCount;
+        document.getElementById('stat-h-count').innerText = hCount;
+
+        const summaryDiv = document.getElementById('stat-grades-summary');
+        summaryDiv.innerHTML = '';
+        Object.keys(gradeCounts).sort((a,b) => b - a).forEach(gVal => {
+            summaryDiv.innerHTML += `<span class="badge bg-light text-dark border p-2">${gVal} : ${gradeCounts[gVal]} հատ</span>`;
+        });
+
+        const cardsDiv = document.getElementById('subjects-summary-cards');
+        cardsDiv.innerHTML = '';
+
+        Object.keys(subjectStats).forEach(subj => {
+            const st = subjectStats[subj];
+            let gradeBrief = [];
+            Object.keys(st.grades).forEach(gv => {
+                gradeBrief.push(`${st.grades[gv]} հատ ${gv}`);
+            });
+            if (st.b > 0) gradeBrief.push(`${st.b} Բ`);
+            if (st.h > 0) gradeBrief.push(`${st.h} Հ`);
+
+            cardsDiv.innerHTML += `
+                <div class="col-md-4">
+                    <div class="card card-custom p-3 subject-card" onclick="showSubjectDetails('${subj}')">
+                        <h6 class="text-primary">${subj}</h6>
+                        <small class="text-muted">${gradeBrief.join(', ') || 'Գնահատական չկա'}</small>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function showSubjectDetails(subjName) {
+        const sec = document.getElementById('detailed-subject-section');
+        const title = document.getElementById('selected-subject-title');
+        const tbody = document.getElementById('detailed-subject-tbody');
+
+        title.innerText = `Մանրամասն Առարկայական Ցանկ: ${subjName}`;
         tbody.innerHTML = '';
-        data.forEach(row => {
+
+        const filtered = rawKursghekData.filter(g => g.subject_name === subjName);
+        filtered.forEach(row => {
             tbody.innerHTML += `
                 <tr>
                     <td>${row.date}</td>
-                    <td>${row.student_name}</td>
-                    <td>${row.subject_name}</td>
-                    <td>${row.lesson_number}</td>
-                    <td><span class="badge bg-primary">${row.grade_value}</span></td>
+                    <td><strong>${row.student_name}</strong></td>
+                    <td>Դաս ${row.lesson_number}</td>
+                    <td><span class="badge ${row.grade_value === 'Բ' ? 'bg-danger' : 'bg-primary'} fs-6">${row.grade_value}</span></td>
                 </tr>
             `;
         });
-        allGradesModal.show();
+
+        sec.style.display = 'block';
+        sec.scrollIntoView({ behavior: 'smooth' });
     }
 
     function downloadExcel() {
         window.location.href = `/api/kursghek/export-excel?course_id=${currentUser.assigned_course_id || 1}`;
     }
 
-    // АДМԻՆ ՖՈՒՆԿՑԻԱՆԵՐ
+    // АДՄԻՆ ՖՈՒՆԿՑԻԱՆԵՐ
     async function createCourse() {
         const name = document.getElementById('admin-new-course-name').value;
         if (!name) return;
