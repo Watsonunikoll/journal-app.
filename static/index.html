@@ -15,6 +15,7 @@
         .table-kursghek th, .table-kursghek td { text-align: center; vertical-align: middle; }
         .table-kursghek td:nth-child(2) { text-align: left; }
         .scroll-feed { max-height: 400px; overflow-y: auto; padding-right: 5px; }
+        .checkbox-container { max-height: 130px; overflow-y: auto; background: #fff; border: 1px solid #ced4da; border-radius: 6px; padding: 8px; }
         @media print {
             #login-section, .no-print, button { display: none !important; }
             .card-custom { box-shadow: none !important; border: 1px solid #ccc !important; }
@@ -89,8 +90,8 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small m-0">Ընտրել Կուրսեր (Կուրսղեկի համար):</label>
-                            <select id="adm-t-courses-multi" class="form-select" multiple style="height: 70px;"></select>
+                            <label class="form-label small m-0 fw-bold">Ընտրել Կուրսեր (Գալոչկաներով):</label>
+                            <div id="adm-t-courses-checkboxes" class="checkbox-container"></div>
                         </div>
                         <div class="col-md-2 d-flex align-items-end">
                             <button onclick="createTeacher()" class="btn btn-success w-100">Ստեղծել</button>
@@ -207,7 +208,7 @@
         <!-- РЕЖИМ 2: Режим Куратора -->
         <div id="kursghek-view" style="display: none;">
             
-            <!-- Переключатель Курсов Куратора (если у него их несколько) -->
+            <!-- Переключатель Курсов Куратора -->
             <div class="card card-custom p-3 mb-4 bg-primary text-white no-print">
                 <div class="row align-items-center">
                     <div class="col-md-4">
@@ -220,7 +221,7 @@
                 </div>
             </div>
 
-            <!-- БЛОК 1: Персональный анализ конкретного студента -->
+            <!-- Персональный анализ конкретного студента -->
             <div class="card card-custom p-4 mb-4 border-primary">
                 <h5 class="text-primary mb-3">👤 Ուսանողի Անհատական Վերլուծություն</h5>
                 
@@ -238,7 +239,6 @@
                     </div>
                 </div>
 
-                <!-- Краткие карточки оценок -->
                 <div id="student-summary-box" style="display: none;">
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
@@ -263,7 +263,7 @@
                 </div>
             </div>
 
-            <!-- БЛОК 2: Сводный журнал всех 30 студентов x 8 уроков -->
+            <!-- Сводный журнал -->
             <div class="card card-custom p-4 mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-4 no-print">
                     <h4 class="m-0 text-primary">Կուրսի Ընդհանուր Մատյան</h4>
@@ -310,7 +310,7 @@
 
 </div>
 
-<!-- Модалка РЕДАКТИРОВАНИЯ УЧИТЕЛЯ (Предметы, Пароль, Курсы) -->
+<!-- Модалка РЕДАКТИРОВАНИЯ УЧИТЕЛЯ -->
 <div class="modal fade" id="editTeacherModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -344,12 +344,12 @@
 
         <div class="row g-3">
             <div class="col-md-6">
-                <label class="form-label fw-bold">Կուրսղեկի Կուրսերը (Կարելի է ընտրել մի քանիսը):</label>
-                <div id="edit-t-courses-checkboxes" class="border p-2 rounded" style="max-height: 150px; overflow-y: auto;"></div>
+                <label class="form-label fw-bold">Կուրսղեկի Կուրսերը (Գալոչկաներով):</label>
+                <div id="edit-t-courses-checkboxes" class="checkbox-container"></div>
             </div>
             <div class="col-md-6">
-                <label class="form-label fw-bold">Դասավանդվող Առարկաները (Կազմ):</label>
-                <div id="edit-t-subjects-checkboxes" class="border p-2 rounded" style="max-height: 150px; overflow-y: auto;"></div>
+                <label class="form-label fw-bold">Դասավանդվող Առարկաները (Գալոչկաներով):</label>
+                <div id="edit-t-subjects-checkboxes" class="checkbox-container"></div>
             </div>
         </div>
       </div>
@@ -494,15 +494,22 @@
         const cSel = document.getElementById('selected-course');
         const admCR = document.getElementById('admin-course-rename-list');
         const admCS = document.getElementById('admin-student-course-select');
-        const admTCMulti = document.getElementById('adm-t-courses-multi');
+        const admTCBoxes = document.getElementById('adm-t-courses-checkboxes');
 
-        cSel.innerHTML = ''; admCR.innerHTML = ''; admCS.innerHTML = ''; admTCMulti.innerHTML = '';
+        cSel.innerHTML = ''; admCR.innerHTML = ''; admCS.innerHTML = ''; admTCBoxes.innerHTML = '';
 
         allCoursesList.forEach(c => {
             cSel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
             admCR.innerHTML += `<option value="${c.id}">${c.name}</option>`;
             admCS.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-            admTCMulti.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+            
+            // Чекбоксы при создании учителя
+            admTCBoxes.innerHTML += `
+                <div class="form-check">
+                    <input class="form-check-input create-t-course-cb" type="checkbox" value="${c.id}" id="create-cb-c-${c.id}">
+                    <label class="form-check-label" for="create-cb-c-${c.id}">${c.name}</label>
+                </div>
+            `;
         });
 
         const sSel = document.getElementById('selected-subject');
@@ -604,7 +611,6 @@
         alert('Պահպանված է:');
     }
 
-    // ЛՈԳԻԿԱ ԿՈՒՐՍՂԵԿԻ ՌԵԺԻՄԻ (МНОЖЕСТВЕННЫЕ КУРСЫ)
     function setupKursghekCoursesDropdown() {
         const sel = document.getElementById('kursghek-active-course-select');
         sel.innerHTML = '';
@@ -775,7 +781,7 @@
         window.location.href = `/api/kursghek/export-excel?course_id=${cId}`;
     }
 
-    // АԴՄԻՆ ՖՈՒՆԿՑԻԱՆԵՐ (ՌԵԴԱԿՏԻՐՈՎԱՆԻԵ ՈՒՉԻՏԵԼԵՅ)
+    // АԴՄԻՆ ՖՈՒՆԿՑԻԱՆԵՐ
     async function loadAdminTeachers() {
         const res = await fetch('/api/teachers');
         const teachers = await res.json();
@@ -807,28 +813,28 @@
         document.getElementById('edit-t-pass').value = '';
         document.getElementById('edit-t-iskursghek').value = t.is_kursghek ? "1" : "0";
 
-        // Чекбоксы курсов
+        // Чекбоксы курсов в модалке
         const coursesDiv = document.getElementById('edit-t-courses-checkboxes');
         coursesDiv.innerHTML = '';
         allCoursesList.forEach(c => {
             const checked = t.course_ids.includes(c.id) ? 'checked' : '';
             coursesDiv.innerHTML += `
                 <div class="form-check">
-                    <input class="form-check-input edit-t-course-cb" type="checkbox" value="${c.id}" id="cb-c-${c.id}" ${checked}>
-                    <label class="form-check-label" for="cb-c-${c.id}">${c.name}</label>
+                    <input class="form-check-input edit-t-course-cb" type="checkbox" value="${c.id}" id="edit-cb-c-${c.id}" ${checked}>
+                    <label class="form-check-label" for="edit-cb-c-${c.id}">${c.name}</label>
                 </div>
             `;
         });
 
-        // Чекбоксы предметов
+        // Чекбоксы предметов в модалке
         const subjectsDiv = document.getElementById('edit-t-subjects-checkboxes');
         subjectsDiv.innerHTML = '';
         allSubjectsList.forEach(s => {
             const checked = t.subject_ids.includes(s.id) ? 'checked' : '';
             subjectsDiv.innerHTML += `
                 <div class="form-check">
-                    <input class="form-check-input edit-t-subject-cb" type="checkbox" value="${s.id}" id="cb-s-${s.id}" ${checked}>
-                    <label class="form-check-label" for="cb-s-${s.id}">${s.name}</label>
+                    <input class="form-check-input edit-t-subject-cb" type="checkbox" value="${s.id}" id="edit-cb-s-${s.id}" ${checked}>
+                    <label class="form-check-label" for="edit-cb-s-${s.id}">${s.name}</label>
                 </div>
             `;
         });
@@ -871,8 +877,7 @@
         const n = document.getElementById('adm-t-name').value;
         const isK = document.getElementById('adm-t-iskursghek').value;
 
-        const cSel = document.getElementById('adm-t-courses-multi');
-        const course_ids = Array.from(cSel.selectedOptions).map(opt => parseInt(opt.value));
+        const course_ids = Array.from(document.querySelectorAll('.create-t-course-cb:checked')).map(cb => parseInt(cb.value));
 
         if (!u || !p || !n) return alert('Լրացրեք բոլոր դաշտերը');
 
@@ -890,6 +895,13 @@
         });
 
         alert('Դասախոսը ստեղծված է:');
+        
+        // Сброс формы
+        document.getElementById('adm-t-user').value = '';
+        document.getElementById('adm-t-pass').value = '';
+        document.getElementById('adm-t-name').value = '';
+        document.querySelectorAll('.create-t-course-cb').forEach(cb => cb.checked = false);
+
         loadAdminTeachers();
     }
 
