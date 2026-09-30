@@ -76,12 +76,16 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     subjs = [{"id": s.id, "name": s.name} for s in user.subjects]
     
     managed_courses = []
+    assigned_course_ids = []
+
     if hasattr(user, 'courses') and user.courses:
         managed_courses = [{"id": c.id, "name": c.name} for c in user.courses]
+        assigned_course_ids = [c.id for c in user.courses]
     elif user.assigned_course_id:
         c = db.query(Course).filter(Course.id == user.assigned_course_id).first()
         if c:
             managed_courses = [{"id": c.id, "name": c.name}]
+            assigned_course_ids = [c.id]
 
     return {
         "user_id": user.id,
@@ -90,6 +94,7 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         "role": user.role,
         "is_kursghek": user.is_kursghek,
         "assigned_course_id": user.assigned_course_id,
+        "assigned_course_ids": assigned_course_ids,
         "managed_courses": managed_courses,
         "subjects": subjs
     }
@@ -114,13 +119,23 @@ def get_students(course_id: int, db: Session = Depends(get_db)):
 @app.get("/api/teachers")
 def get_teachers(db: Session = Depends(get_db)):
     teachers = db.query(User).filter(User.role == "teacher").order_by(User.id).all()
-    return [{
-        "id": t.id,
-        "username": t.username,
-        "full_name": t.full_name,
-        "is_kursghek": t.is_kursghek,
-        "assigned_course_id": t.assigned_course_id
-    } for t in teachers]
+    result = []
+    for t in teachers:
+        c_ids = []
+        if hasattr(t, 'courses') and t.courses:
+            c_ids = [c.id for c in t.courses]
+        elif t.assigned_course_id:
+            c_ids = [t.assigned_course_id]
+
+        result.append({
+            "id": t.id,
+            "username": t.username,
+            "full_name": t.full_name,
+            "is_kursghek": t.is_kursghek,
+            "assigned_course_id": t.assigned_course_id,
+            "course_ids": c_ids
+        })
+    return result
 
 
 @app.get("/api/grades")
@@ -265,7 +280,7 @@ def update_teacher(req: AdminTeacherUpdate, db: Session = Depends(get_db)):
         subjs = db.query(Subject).filter(Subject.id.in_(req.subject_ids)).all()
         t.subjects = subjs
 
-    # Обновление курсов
+    # Обновление курсов (поддержка многих курсов)
     if req.course_ids:
         t.assigned_course_id = req.course_ids[0]
         if hasattr(t, 'courses'):
