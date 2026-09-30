@@ -73,19 +73,22 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=400, detail="Անվավեր մուտքանուն կամ գաղտնաբառ")
     
-    subjs = [{"id": s.id, "name": s.name} for s in user.subjects]
+    subjs = [{"id": s.id, "name": s.name} for s in getattr(user, 'subjects', [])]
     
     managed_courses = []
     assigned_course_ids = []
 
+    # Безопасное получение связей с курсами
     if hasattr(user, 'courses') and user.courses:
         managed_courses = [{"id": c.id, "name": c.name} for c in user.courses]
         assigned_course_ids = [c.id for c in user.courses]
-    elif user.assigned_course_id:
+    elif getattr(user, 'assigned_course_id', None):
         c = db.query(Course).filter(Course.id == user.assigned_course_id).first()
         if c:
             managed_courses = [{"id": c.id, "name": c.name}]
             assigned_course_ids = [c.id]
+
+    primary_assigned_id = assigned_course_ids[0] if assigned_course_ids else getattr(user, 'assigned_course_id', None)
 
     return {
         "user_id": user.id,
@@ -93,7 +96,7 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         "full_name": user.full_name or user.username,
         "role": user.role,
         "is_kursghek": user.is_kursghek,
-        "assigned_course_id": user.assigned_course_id,
+        "assigned_course_id": primary_assigned_id,
         "assigned_course_ids": assigned_course_ids,
         "managed_courses": managed_courses,
         "subjects": subjs
@@ -124,15 +127,17 @@ def get_teachers(db: Session = Depends(get_db)):
         c_ids = []
         if hasattr(t, 'courses') and t.courses:
             c_ids = [c.id for c in t.courses]
-        elif t.assigned_course_id:
+        elif getattr(t, 'assigned_course_id', None):
             c_ids = [t.assigned_course_id]
+
+        primary_id = c_ids[0] if c_ids else getattr(t, 'assigned_course_id', None)
 
         result.append({
             "id": t.id,
             "username": t.username,
             "full_name": t.full_name,
             "is_kursghek": t.is_kursghek,
-            "assigned_course_id": t.assigned_course_id,
+            "assigned_course_id": primary_id,
             "course_ids": c_ids
         })
     return result
@@ -244,12 +249,12 @@ def get_teacher_details(teacher_id: int, db: Session = Depends(get_db)):
     if not t:
         raise HTTPException(status_code=404, detail="Դասախոսը գտնված չէ")
     
-    subject_ids = [s.id for s in t.subjects]
+    subject_ids = [s.id for s in getattr(t, 'subjects', [])]
     
     course_ids = []
     if hasattr(t, 'courses') and t.courses:
         course_ids = [c.id for c in t.courses]
-    elif t.assigned_course_id:
+    elif getattr(t, 'assigned_course_id', None):
         course_ids = [t.assigned_course_id]
 
     return {
@@ -275,19 +280,19 @@ def update_teacher(req: AdminTeacherUpdate, db: Session = Depends(get_db)):
     if req.password and req.password.strip() != "":
         t.password = req.password
 
-    # Обновление предметов
-    if req.subject_ids is not None:
+    if req.subject_ids is not None and hasattr(t, 'subjects'):
         subjs = db.query(Subject).filter(Subject.id.in_(req.subject_ids)).all()
         t.subjects = subjs
 
-    # Обновление курсов (поддержка многих курсов)
     if req.course_ids:
-        t.assigned_course_id = req.course_ids[0]
+        if hasattr(t, 'assigned_course_id'):
+            setattr(t, 'assigned_course_id', req.course_ids[0])
         if hasattr(t, 'courses'):
             courses = db.query(Course).filter(Course.id.in_(req.course_ids)).all()
             t.courses = courses
     else:
-        t.assigned_course_id = None
+        if hasattr(t, 'assigned_course_id'):
+            setattr(t, 'assigned_course_id', None)
         if hasattr(t, 'courses'):
             t.courses = []
 
@@ -344,16 +349,20 @@ def add_subject(name: str, db: Session = Depends(get_db)):
 def create_user(req: AdminUserCreate, db: Session = Depends(get_db)):
     assigned_c_id = req.assigned_course_ids[0] if req.assigned_course_ids else None
     
-    u = User(
-        username=req.username,
-        password=req.password,
-        full_name=req.full_name,
-        role=req.role,
-        is_kursghek=req.is_kursghek,
-        assigned_course_id=assigned_c_id
-    )
+    user_kwargs = {
+        "username": req.username,
+        "password": req.password,
+        "full_name": req.full_name,
+        "role": req.role,
+        "is_kursghek": req.is_kursghek,
+    }
 
-    if req.subject_ids:
+    if hasattr(User, 'assigned_course_id'):
+        user_kwargs["assigned_course_id"] = assigned_c_id
+
+    u = User(**user_kwargs)
+
+    if req.subject_ids and hasattr(u, 'subjects'):
         subjs = db.query(Subject).filter(Subject.id.in_(req.subject_ids)).all()
         u.subjects = subjs
 
