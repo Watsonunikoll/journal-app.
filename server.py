@@ -75,7 +75,6 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     
     subjs = [{"id": s.id, "name": s.name} for s in user.subjects]
     
-    # Обработка курсов куратора (если поддержка M2M или single)
     managed_courses = []
     if hasattr(user, 'courses') and user.courses:
         managed_courses = [{"id": c.id, "name": c.name} for c in user.courses]
