@@ -21,6 +21,7 @@ def get_db():
     finally:
         db.close()
 
+# Pydantic-схемы
 class LoginRequest(BaseModel):
     username: str
     password: str
@@ -44,16 +45,27 @@ class AdminUserCreate(BaseModel):
     full_name: str
     role: str
     is_kursghek: int
-    assigned_course_id: Optional[int] = None
+    assigned_course_ids: List[int] = []
+    subject_ids: List[int] = []
+
+class AdminTeacherUpdate(BaseModel):
+    user_id: int
+    username: str
+    password: Optional[str] = ""
+    full_name: str
+    is_kursghek: int
+    course_ids: List[int] = []
     subject_ids: List[int] = []
 
 class AdminStudentCreate(BaseModel):
     full_name: str
     course_id: int
 
+
 @app.get("/")
 def read_root():
     return FileResponse("static/index.html")
+
 
 @app.post("/api/login")
 def login(req: LoginRequest, db: Session = Depends(get_db)):
@@ -62,6 +74,16 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Անվավեր մուտքանուն կամ գաղտնաբառ")
     
     subjs = [{"id": s.id, "name": s.name} for s in user.subjects]
+    
+    # Обработка курсов куратора (если поддержка M2M или single)
+    managed_courses = []
+    if hasattr(user, 'courses') and user.courses:
+        managed_courses = [{"id": c.id, "name": c.name} for c in user.courses]
+    elif user.assigned_course_id:
+        c = db.query(Course).filter(Course.id == user.assigned_course_id).first()
+        if c:
+            managed_courses = [{"id": c.id, "name": c.name}]
+
     return {
         "user_id": user.id,
         "username": user.username,
@@ -69,26 +91,38 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         "role": user.role,
         "is_kursghek": user.is_kursghek,
         "assigned_course_id": user.assigned_course_id,
+        "managed_courses": managed_courses,
         "subjects": subjs
     }
+
 
 @app.get("/api/courses")
 def get_courses(db: Session = Depends(get_db)):
     return [{"id": c.id, "name": c.name} for c in db.query(Course).order_by(Course.id).all()]
 
+
 @app.get("/api/subjects")
 def get_subjects(db: Session = Depends(get_db)):
     return [{"id": s.id, "name": s.name} for s in db.query(Subject).order_by(Subject.id).all()]
+
 
 @app.get("/api/courses/{course_id}/students")
 def get_students(course_id: int, db: Session = Depends(get_db)):
     students = db.query(Student).filter(Student.course_id == course_id).order_by(Student.id).all()
     return [{"id": s.id, "full_name": s.full_name, "course_id": s.course_id} for s in students]
 
+
 @app.get("/api/teachers")
 def get_teachers(db: Session = Depends(get_db)):
     teachers = db.query(User).filter(User.role == "teacher").order_by(User.id).all()
-    return [{"id": t.id, "username": t.username, "full_name": t.full_name, "is_kursghek": t.is_kursghek, "assigned_course_id": t.assigned_course_id} for t in teachers]
+    return [{
+        "id": t.id,
+        "username": t.username,
+        "full_name": t.full_name,
+        "is_kursghek": t.is_kursghek,
+        "assigned_course_id": t.assigned_course_id
+    } for t in teachers]
+
 
 @app.get("/api/grades")
 def get_grades(course_id: int, date: str, subject_id: Optional[int] = None, db: Session = Depends(get_db)):
@@ -105,6 +139,7 @@ def get_grades(course_id: int, date: str, subject_id: Optional[int] = None, db: 
         "grade_value": g.grade_value,
         "is_locked": g.is_locked
     } for g in grades]
+
 
 @app.post("/api/grades")
 def save_grade(req: GradeSave, db: Session = Depends(get_db)):
@@ -136,24 +171,29 @@ def save_grade(req: GradeSave, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "success"}
 
+
 @app.get("/api/kursghek/all-grades")
 def get_all_course_grades(course_id: int, db: Session = Depends(get_db)):
-    grades = db.query(Grade, Student.full_name, Subject.name)\
+    grades = db.query(Grade, Student.full_name, Subject.name, User.full_name)\
         .join(Student, Grade.student_id == Student.id)\
         .join(Subject, Grade.subject_id == Subject.id)\
+        .outerjoin(User, Grade.teacher_id == User.id)\
         .filter(Grade.course_id == course_id)\
         .order_by(Grade.date.desc()).all()
 
     res = []
-    for g, st_name, subj_name in grades:
+    for g, st_name, subj_name, teacher_name in grades:
         res.append({
             "date": g.date,
+            "student_id": g.student_id,
             "student_name": st_name,
             "subject_name": subj_name,
             "lesson_number": g.lesson_number,
-            "grade_value": g.grade_value
+            "grade_value": g.grade_value,
+            "teacher_name": teacher_name or "Դասախոս"
         })
     return res
+
 
 @app.get("/api/kursghek/export-excel")
 def export_excel(course_id: int, db: Session = Depends(get_db)):
@@ -181,17 +221,76 @@ def export_excel(course_id: int, db: Session = Depends(get_db)):
     headers = {'Content-Disposition': f'attachment; filename="course_{course_id}_report.xlsx"'}
     return StreamingResponse(stream, headers=headers, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
-# API АДМИНА
+
+# --- API АДМИНА ---
+
+@app.get("/api/admin/teacher/{teacher_id}")
+def get_teacher_details(teacher_id: int, db: Session = Depends(get_db)):
+    t = db.query(User).filter(User.id == teacher_id).first()
+    if not t:
+        raise HTTPException(status_code=404, detail="Դասախոսը գտնված չէ")
+    
+    subject_ids = [s.id for s in t.subjects]
+    
+    course_ids = []
+    if hasattr(t, 'courses') and t.courses:
+        course_ids = [c.id for c in t.courses]
+    elif t.assigned_course_id:
+        course_ids = [t.assigned_course_id]
+
+    return {
+        "id": t.id,
+        "username": t.username,
+        "full_name": t.full_name,
+        "is_kursghek": t.is_kursghek,
+        "course_ids": course_ids,
+        "subject_ids": subject_ids
+    }
+
+
+@app.post("/api/admin/update-teacher")
+def update_teacher(req: AdminTeacherUpdate, db: Session = Depends(get_db)):
+    t = db.query(User).filter(User.id == req.user_id).first()
+    if not t:
+        raise HTTPException(status_code=404, detail="Դասախոսը գտնված չէ")
+
+    t.username = req.username
+    t.full_name = req.full_name
+    t.is_kursghek = req.is_kursghek
+
+    if req.password and req.password.strip() != "":
+        t.password = req.password
+
+    # Обновление предметов
+    if req.subject_ids is not None:
+        subjs = db.query(Subject).filter(Subject.id.in_(req.subject_ids)).all()
+        t.subjects = subjs
+
+    # Обновление курсов
+    if req.course_ids:
+        t.assigned_course_id = req.course_ids[0]
+        if hasattr(t, 'courses'):
+            courses = db.query(Course).filter(Course.id.in_(req.course_ids)).all()
+            t.courses = courses
+    else:
+        t.assigned_course_id = None
+        if hasattr(t, 'courses'):
+            t.courses = []
+
+    db.commit()
+    return {"status": "success"}
+
+
 @app.post("/api/admin/create-course")
 def create_course(name: str, db: Session = Depends(get_db)):
     c = Course(name=name)
     db.add(c)
     db.commit()
-    # Добавляем сразу 30 студентов
     for i in range(1, 31):
         db.add(Student(full_name=f"Student {i}", course_id=c.id))
     db.commit()
     return {"status": "success"}
+
 
 @app.post("/api/admin/update-course")
 def update_course(req: AdminCourseUpdate, db: Session = Depends(get_db)):
@@ -201,12 +300,14 @@ def update_course(req: AdminCourseUpdate, db: Session = Depends(get_db)):
         db.commit()
     return {"status": "success"}
 
+
 @app.post("/api/admin/add-student")
 def add_student(req: AdminStudentCreate, db: Session = Depends(get_db)):
     st = Student(full_name=req.full_name, course_id=req.course_id)
     db.add(st)
     db.commit()
     return {"status": "success"}
+
 
 @app.delete("/api/admin/delete-student/{student_id}")
 def delete_student(student_id: int, db: Session = Depends(get_db)):
@@ -216,6 +317,7 @@ def delete_student(student_id: int, db: Session = Depends(get_db)):
         db.commit()
     return {"status": "success"}
 
+
 @app.post("/api/admin/add-subject")
 def add_subject(name: str, db: Session = Depends(get_db)):
     s = Subject(name=name)
@@ -223,22 +325,32 @@ def add_subject(name: str, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "success"}
 
+
 @app.post("/api/admin/create-user")
 def create_user(req: AdminUserCreate, db: Session = Depends(get_db)):
+    assigned_c_id = req.assigned_course_ids[0] if req.assigned_course_ids else None
+    
     u = User(
         username=req.username,
         password=req.password,
         full_name=req.full_name,
         role=req.role,
         is_kursghek=req.is_kursghek,
-        assigned_course_id=req.assigned_course_id
+        assigned_course_id=assigned_c_id
     )
+
     if req.subject_ids:
         subjs = db.query(Subject).filter(Subject.id.in_(req.subject_ids)).all()
         u.subjects = subjs
+
+    if hasattr(u, 'courses') and req.assigned_course_ids:
+        courses = db.query(Course).filter(Course.id.in_(req.assigned_course_ids)).all()
+        u.courses = courses
+
     db.add(u)
     db.commit()
     return {"status": "success"}
+
 
 @app.delete("/api/admin/delete-user/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db)):
