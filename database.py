@@ -132,3 +132,9 @@ def init_db():
 
 if __name__ == "__main__":
     init_db()
+else:
+    # Этот блок сработает АВТОМАТИЧЕСКИ, когда Render загрузит твоё приложение!
+    try:
+        init_db()
+    except Exception as e:
+        print(f"Ошибка автоматической инициализации: {e}")
