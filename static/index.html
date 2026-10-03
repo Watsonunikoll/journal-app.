@@ -61,7 +61,7 @@
             </div>
         </div>
 
-        <!-- АԴՄԻՆ ՊԱՆԵԼ -->
+        <!-- ԱԴՄԻՆ ՊԱՆԵԼ -->
         <div id="admin-panel" class="card card-custom p-4 mb-4 no-print" style="display: none;">
             <h5 class="text-danger mb-3">⚙️ Ադմինիստրատորի Պանել (Լրիվ Վերահսկողություն)</h5>
             
@@ -129,11 +129,21 @@
                 <!-- Управление Студентами -->
                 <div class="tab-pane fade" id="tab-students">
                     <div class="row g-3 mb-3">
-                        <div class="col-md-4">
-                            <label>Ընտրել Կուրսը:</label>
+                        <div class="col-md-3">
+                            <label>Ուսուցման Տարի (Կուրս):</label>
+                            <select id="admin-student-year-filter" class="form-select" onchange="filterAdminCoursesByYear()">
+                                <option value="all">Բոլոր կուրսերը</option>
+                                <option value="1">1-ին կուրս</option>
+                                <option value="2">2-րդ կուրս</option>
+                                <option value="3">3-րդ կուրս</option>
+                                <option value="4">4-րդ կուրս</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label>Ընտրել Խումբը:</label>
                             <select id="admin-student-course-select" class="form-select" onchange="loadAdminStudents()"></select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label>Ավելացնել Ուսանող:</label>
                             <input type="text" id="admin-new-student-name" class="form-control" placeholder="Ուսանողի ԱԱՀ">
                         </div>
@@ -163,19 +173,29 @@
         <div id="teacher-view">
             <div class="card card-custom p-3 mb-4 no-print">
                 <div class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">Ամսաթիվ:</label>
                         <input type="date" id="selected-date" class="form-control" onchange="loadJournalData()">
                     </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Ուս. Տարի (Կուրս):</label>
+                        <select id="selected-year" class="form-select" onchange="filterCoursesByYear()">
+                            <option value="all">Բոլորը</option>
+                            <option value="1">1-ին կուրս</option>
+                            <option value="2">2-րդ կուրս</option>
+                            <option value="3">3-րդ կուրս</option>
+                            <option value="4">4-րդ կուրս</option>
+                        </select>
+                    </div>
                     <div class="col-md-3">
-                        <label class="form-label">Ընտրել Կուրսը:</label>
+                        <label class="form-label">Ընտրել Խումբը:</label>
                         <select id="selected-course" class="form-select" onchange="loadJournalData()"></select>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Ընտրել Առարկան:</label>
                         <select id="selected-subject" class="form-select" onchange="loadJournalData()"></select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">Դասերի Զույգը:</label>
                         <select id="selected-lessons" class="form-select" onchange="loadJournalData()">
                             <option value="1-2">1-ին և 2-րդ դաս</option>
@@ -183,6 +203,13 @@
                             <option value="5-6">5-րդ և 6-րդ դաս</option>
                             <option value="7-8">7-րդ և 8-րդ դաս</option>
                         </select>
+                    </div>
+                </div>
+                <!-- Поле ввода темы урока -->
+                <div class="row g-3 mt-1">
+                    <div class="col-12">
+                        <label class="form-label fw-bold text-primary">📝 Դասի Թեմա (Тема урока):</label>
+                        <input type="text" id="lesson-topic" class="form-control" placeholder="Մուտքագրեք այսօրվա դասի թեման...">
                     </div>
                 </div>
             </div>
@@ -212,10 +239,18 @@
             <div class="card card-custom p-3 mb-4 bg-primary text-white no-print">
                 <div class="row align-items-center">
                     <div class="col-md-4">
-                        <h5 class="m-0">  Կուրսղեկի Վահանակ</h5>
+                        <h5 class="m-0">📋 Կուրսղեկի Վահանակ</h5>
                     </div>
                     <div class="col-md-8 d-flex align-items-center gap-2 justify-content-end">
-                        <label class="fw-bold mb-0">Ընտրել Կուրսը:</label>
+                        <label class="fw-bold mb-0">Կուրս:</label>
+                        <select id="kursghek-year-select" class="form-select w-auto" onchange="filterKursghekCoursesByYear()">
+                            <option value="all">Բոլորը</option>
+                            <option value="1">1-ին կուրս</option>
+                            <option value="2">2-րդ կուրս</option>
+                            <option value="3">3-րդ կուրս</option>
+                            <option value="4">4-րդ կուրս</option>
+                        </select>
+                        <label class="fw-bold mb-0 ms-2">Խումբ:</label>
                         <select id="kursghek-active-course-select" class="form-select w-auto" onchange="onKursghekCourseChange()"></select>
                     </div>
                 </div>
@@ -379,6 +414,7 @@
                         <th>Դաս №</th>
                         <th>Գնահատական</th>
                         <th>Դասախոս</th>
+                        <th>Գործողություն</th>
                     </tr>
                 </thead>
                 <tbody id="full-grades-tbody"></tbody>
@@ -395,7 +431,7 @@
     <div class="modal-content">
       <div class="modal-header"><h6 class="modal-title">Ընտրել Գնահատական</h6></div>
       <div class="modal-body">
-        <div class="grade-btn-grid">
+        <div class="grade-btn-grid mb-2">
             <button class="btn btn-outline-primary" onclick="setGrade('1')">1</button>
             <button class="btn btn-outline-primary" onclick="setGrade('2')">2</button>
             <button class="btn btn-outline-primary" onclick="setGrade('3')">3</button>
@@ -410,6 +446,8 @@
             <button class="btn btn-warning" onclick="setGrade('Հ')">Հ</button>
             <button class="btn btn-info" onclick="setGrade('Ն')">Ն</button>
         </div>
+        <!-- Кнопка удаления/очистки оценки -->
+        <button class="btn btn-outline-danger w-100 fw-bold" onclick="setGrade('-')">❌ Ջնջել Գնահատականը</button>
       </div>
     </div>
   </div>
@@ -491,19 +529,14 @@
         const cRes = await fetch('/api/courses');
         allCoursesList = await cRes.json();
         
-        const cSel = document.getElementById('selected-course');
         const admCR = document.getElementById('admin-course-rename-list');
-        const admCS = document.getElementById('admin-student-course-select');
         const admTCBoxes = document.getElementById('adm-t-courses-checkboxes');
 
-        cSel.innerHTML = ''; admCR.innerHTML = ''; admCS.innerHTML = ''; admTCBoxes.innerHTML = '';
+        admCR.innerHTML = ''; admTCBoxes.innerHTML = '';
 
         allCoursesList.forEach(c => {
-            cSel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
             admCR.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-            admCS.innerHTML += `<option value="${c.id}">${c.name}</option>`;
             
-            // Чекбоксы при создании учителя
             admTCBoxes.innerHTML += `
                 <div class="form-check">
                     <input class="form-check-input create-t-course-cb" type="checkbox" value="${c.id}" id="create-cb-c-${c.id}">
@@ -511,6 +544,9 @@
                 </div>
             `;
         });
+
+        filterCoursesByYear();
+        filterAdminCoursesByYear();
 
         const sSel = document.getElementById('selected-subject');
         sSel.innerHTML = '';
@@ -527,6 +563,40 @@
                 sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
             });
         }
+
+        loadAdminStudents();
+    }
+
+    function filterCoursesByYear() {
+        const selectedYear = document.getElementById('selected-year').value;
+        const cSel = document.getElementById('selected-course');
+        cSel.innerHTML = '';
+
+        const filtered = allCoursesList.filter(c => {
+            if (selectedYear === 'all') return true;
+            return c.name.includes(selectedYear);
+        });
+
+        filtered.forEach(c => {
+            cSel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+        });
+
+        loadJournalData();
+    }
+
+    function filterAdminCoursesByYear() {
+        const selectedYear = document.getElementById('admin-student-year-filter').value;
+        const admCS = document.getElementById('admin-student-course-select');
+        admCS.innerHTML = '';
+
+        const filtered = allCoursesList.filter(c => {
+            if (selectedYear === 'all') return true;
+            return c.name.includes(selectedYear);
+        });
+
+        filtered.forEach(c => {
+            admCS.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+        });
 
         loadAdminStudents();
     }
@@ -549,7 +619,10 @@
         const subjectId = document.getElementById('selected-subject').value;
         const lessons = document.getElementById('selected-lessons').value.split('-');
 
-        if (!courseId) return;
+        if (!courseId) {
+            document.getElementById('students-table-body').innerHTML = '';
+            return;
+        }
 
         document.getElementById('th-l1').innerText = `Դաս ${lessons[0]}`;
         document.getElementById('th-l2').innerText = lessons[1] ? `Դաս ${lessons[1]}` : '-';
@@ -562,6 +635,13 @@
 
         const tbody = document.getElementById('students-table-body');
         tbody.innerHTML = '';
+
+        // Загрузка сохраненной темы урока
+        if (grades.length > 0 && grades[0].topic) {
+            document.getElementById('lesson-topic').value = grades[0].topic;
+        } else {
+            document.getElementById('lesson-topic').value = '';
+        }
 
         students.forEach((st, idx) => {
             const g1 = grades.find(g => g.student_id === st.id && g.lesson_number == lessons[0])?.grade_value || '-';
@@ -583,6 +663,7 @@
         const date = document.getElementById('selected-date').value;
         const subjectId = document.getElementById('selected-subject').value;
         const lessons = document.getElementById('selected-lessons').value.split('-');
+        const topic = document.getElementById('lesson-topic').value;
 
         const stRes = await fetch(`/api/courses/${courseId}/students`);
         const students = await stRes.json();
@@ -591,7 +672,7 @@
             for (let l of lessons) {
                 if (!l) continue;
                 const elem = document.getElementById(`g-${st.id}-${l}`);
-                if (elem && elem.innerText !== '-') {
+                if (elem) {
                     await fetch('/api/grades', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
@@ -602,6 +683,7 @@
                             course_id: parseInt(courseId),
                             lesson_number: parseInt(l),
                             grade_value: elem.innerText,
+                            topic: topic,
                             date: date
                         })
                     });
@@ -611,7 +693,27 @@
         alert('Պահպանված է:');
     }
 
+    async function deleteGradeById(gradeId) {
+        if (!confirm('Ջնջե՞լ այս գնահատականը:')) return;
+        
+        await fetch(`/api/grades/${gradeId}`, { method: 'DELETE' });
+        alert('Գնահատականը ջնջված է:');
+        
+        // Перезагрузка текущих видов
+        if (isKursghekMode) {
+            await loadKursghekStudentsList();
+            openFullGradesModal();
+        } else {
+            loadJournalData();
+        }
+    }
+
     function setupKursghekCoursesDropdown() {
+        filterKursghekCoursesByYear();
+    }
+
+    function filterKursghekCoursesByYear() {
+        const selectedYear = document.getElementById('kursghek-year-select').value;
         const sel = document.getElementById('kursghek-active-course-select');
         sel.innerHTML = '';
 
@@ -620,7 +722,12 @@
             userCourses = allCoursesList;
         }
 
-        userCourses.forEach(c => {
+        const filtered = userCourses.filter(c => {
+            if (selectedYear === 'all') return true;
+            return c.name.includes(selectedYear);
+        });
+
+        filtered.forEach(c => {
             sel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
         });
 
@@ -634,13 +741,14 @@
 
     async function loadKursghekStudentsList() {
         const courseId = document.getElementById('kursghek-active-course-select').value;
+        const sel = document.getElementById('kursghek-student-select');
+        sel.innerHTML = '<option value="">-- Ընտրեք ուսանողին --</option>';
+
         if (!courseId) return;
 
         const stRes = await fetch(`/api/courses/${courseId}/students`);
         const students = await stRes.json();
 
-        const sel = document.getElementById('kursghek-student-select');
-        sel.innerHTML = '<option value="">-- Ընտրեք ուսանողին --</option>';
         students.forEach(st => {
             sel.innerHTML += `<option value="${st.id}">${st.full_name}</option>`;
         });
@@ -666,7 +774,7 @@
             const val = g.grade_value;
             if (val === 'Բ') bCount++;
             else if (val === 'Հ') hCount++;
-            else gradeCounts[val] = (gradeCounts[val] || 0) + 1;
+            else if (val !== '-') gradeCounts[val] = (gradeCounts[val] || 0) + 1;
         });
 
         document.getElementById('stat-b-count').innerText = bCount;
@@ -716,7 +824,7 @@
         tbody.innerHTML = '';
 
         if (studentGrades.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Տվյալներ չկան</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Տվյալներ չկան</td></tr>';
         } else {
             studentGrades.forEach(row => {
                 tbody.innerHTML += `
@@ -726,6 +834,9 @@
                         <td>Դաս ${row.lesson_number}</td>
                         <td><span class="badge ${row.grade_value === 'Բ' ? 'bg-danger' : 'bg-primary'} fs-6">${row.grade_value}</span></td>
                         <td>${row.teacher_name || '-'}</td>
+                        <td class="text-center">
+                            <button onclick="deleteGradeById(${row.id})" class="btn btn-sm btn-outline-danger" title="Ջնջել">❌</button>
+                        </td>
                     </tr>
                 `;
             });
@@ -741,7 +852,12 @@
 
     async function loadKursghekFullTable() {
         const courseId = document.getElementById('kursghek-active-course-select').value;
-        if (!courseId) return;
+        const tbody = document.getElementById('kursghek-table-body');
+        
+        if (!courseId) {
+            tbody.innerHTML = '';
+            return;
+        }
 
         const date = document.getElementById('kursghek-date').value;
 
@@ -751,7 +867,6 @@
         const grRes = await fetch(`/api/grades?course_id=${courseId}&date=${date}`);
         const grades = await grRes.json();
 
-        const tbody = document.getElementById('kursghek-table-body');
         tbody.innerHTML = '';
 
         students.forEach((st, idx) => {
@@ -778,10 +893,11 @@
 
     function downloadExcel() {
         const cId = document.getElementById('kursghek-active-course-select').value;
+        if (!cId) return alert('Խնդրում ենք ընտրել կուրսը');
         window.location.href = `/api/kursghek/export-excel?course_id=${cId}`;
     }
 
-    // АԴՄԻՆ ՖՈՒՆԿՑԻԱՆԵՐ
+    // ԱԴՄԻՆ ՖՈՒՆԿՑԻԱՆԵՐ
     async function loadAdminTeachers() {
         const res = await fetch('/api/teachers');
         const teachers = await res.json();
@@ -813,7 +929,6 @@
         document.getElementById('edit-t-pass').value = '';
         document.getElementById('edit-t-iskursghek').value = t.is_kursghek ? "1" : "0";
 
-        // Чекбоксы курсов в модалке
         const coursesDiv = document.getElementById('edit-t-courses-checkboxes');
         coursesDiv.innerHTML = '';
         allCoursesList.forEach(c => {
@@ -826,7 +941,6 @@
             `;
         });
 
-        // Чекбоксы предметов в модалке
         const subjectsDiv = document.getElementById('edit-t-subjects-checkboxes');
         subjectsDiv.innerHTML = '';
         allSubjectsList.forEach(s => {
@@ -896,7 +1010,6 @@
 
         alert('Դասախոսը ստեղծված է:');
         
-        // Сброс формы
         document.getElementById('adm-t-user').value = '';
         document.getElementById('adm-t-pass').value = '';
         document.getElementById('adm-t-name').value = '';
@@ -935,10 +1048,16 @@
 
     async function loadAdminStudents() {
         const courseId = document.getElementById('admin-student-course-select').value;
-        if (!courseId) return;
+        const tbody = document.getElementById('admin-students-table');
+        
+        if (!courseId) {
+            tbody.innerHTML = '';
+            return;
+        }
+
         const res = await fetch(`/api/courses/${courseId}/students`);
         const students = await res.json();
-        const tbody = document.getElementById('admin-students-table');
+        
         tbody.innerHTML = '';
         students.forEach(s => {
             tbody.innerHTML += `
@@ -954,7 +1073,8 @@
     async function addStudent() {
         const courseId = document.getElementById('admin-student-course-select').value;
         const name = document.getElementById('admin-new-student-name').value;
-        if (!name) return;
+        if (!name || !courseId) return alert('Լրացրեք անունը և ընտրեք կուրսը');
+        
         await fetch('/api/admin/add-student', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
