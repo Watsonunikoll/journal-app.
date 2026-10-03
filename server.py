@@ -382,3 +382,100 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
         db.delete(u)
         db.commit()
     return {"status": "success"}
+# --- Pydantic Схемы ---
+class TopicSave(BaseModel):
+    course_id: int
+    subject_id: int
+    date: str
+    lesson_number: int
+    topic_text: str
+
+# --- Эндпоинты для Тем Уроков (Lesson Topics) ---
+
+@app.get("/api/topics")
+def get_topics(course_id: int, date: str, subject_id: int, db: Session = Depends(get_db)):
+    topics = db.query(LessonTopic).filter(
+        LessonTopic.course_id == course_id,
+        LessonTopic.subject_id == subject_id,
+        LessonTopic.date == date
+    ).all()
+    return {t.lesson_number: t.topic_text for t in topics}
+
+@app.post("/api/topics")
+def save_topic(req: TopicSave, db: Session = Depends(get_db)):
+    existing = db.query(LessonTopic).filter(
+        LessonTopic.course_id == req.course_id,
+        LessonTopic.subject_id == req.subject_id,
+        LessonTopic.date == req.date,
+        LessonTopic.lesson_number == req.lesson_number
+    ).first()
+
+    if existing:
+        existing.topic_text = req.topic_text
+    else:
+        top = LessonTopic(
+            course_id=req.course_id,
+            subject_id=req.subject_id,
+            date=req.date,
+            lesson_number=req.lesson_number,
+            topic_text=req.topic_text
+        )
+        db.add(top)
+    
+    db.commit()
+    return {"status": "success"}
+
+# --- Обновленный save_grade (поддерживает удаление/очистку оценки) ---
+
+@app.post("/api/grades")
+def save_grade(req: GradeSave, db: Session = Depends(get_db)):
+    existing = db.query(Grade).filter(
+        Grade.student_id == req.student_id,
+        Grade.course_id == req.course_id,
+        Grade.lesson_number == req.lesson_number,
+        Grade.date == req.date,
+        Grade.subject_id == req.subject_id
+    ).first()
+
+    # Если передана пустая строка "", удаляем оценку из БД
+    if req.grade_value == "" or req.grade_value is None:
+        if existing:
+            if existing.is_locked == 1 and existing.teacher_id != req.teacher_id and req.teacher_id != 0:
+                raise HTTPException(status_code=403, detail="Գնահատականը արգելափակված է")
+            db.delete(existing)
+            db.commit()
+        return {"status": "deleted"}
+
+    if existing:
+        if existing.is_locked == 1 and existing.teacher_id != req.teacher_id and req.teacher_id != 0:
+            raise HTTPException(status_code=403, detail="Գնահատականը արգելափակված է")
+        existing.grade_value = req.grade_value
+    else:
+        g = Grade(
+            student_id=req.student_id,
+            teacher_id=req.teacher_id,
+            subject_id=req.subject_id,
+            course_id=req.course_id,
+            lesson_number=req.lesson_number,
+            grade_value=req.grade_value,
+            date=req.date,
+            is_locked=1
+        )
+        db.add(g)
+
+    db.commit()
+    return {"status": "success"}
+
+@app.delete("/api/admin/delete-grade")
+def delete_grade_admin(student_id: int, course_id: int, subject_id: int, lesson_number: int, date: str, db: Session = Depends(get_db)):
+    g = db.query(Grade).filter(
+        Grade.student_id == student_id,
+        Grade.course_id == course_id,
+        Grade.subject_id == subject_id,
+        Grade.lesson_number == lesson_number,
+        Grade.date == date
+    ).first()
+    if g:
+        db.delete(g)
+        db.commit()
+    return {"status": "success"}
