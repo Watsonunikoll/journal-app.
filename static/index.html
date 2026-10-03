@@ -61,7 +61,7 @@
             </div>
         </div>
 
-        <!-- АԴՄԻՆ ՊԱՆԵԼ -->
+        <!-- ԱԴՄԻՆ ՊԱՆԵԼ -->
         <div id="admin-panel" class="card card-custom p-4 mb-4 no-print" style="display: none;">
             <h5 class="text-danger mb-3">⚙️ Ադմինիստրատորի Պանել (Լրիվ Վերահսկողություն)</h5>
             
@@ -129,11 +129,21 @@
                 <!-- Управление Студентами -->
                 <div class="tab-pane fade" id="tab-students">
                     <div class="row g-3 mb-3">
-                        <div class="col-md-4">
-                            <label>Ընտրել Կուրսը:</label>
+                        <div class="col-md-3">
+                            <label>Ուսուցման Տարի (Կուրս):</label>
+                            <select id="admin-student-year-filter" class="form-select" onchange="filterAdminCoursesByYear()">
+                                <option value="all">Բոլոր կուրսերը</option>
+                                <option value="1">1-ին կուրս</option>
+                                <option value="2">2-րդ կուրս</option>
+                                <option value="3">3-րդ կուրս</option>
+                                <option value="4">4-րդ կուրս</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label>Ընտրել Խումբը:</label>
                             <select id="admin-student-course-select" class="form-select" onchange="loadAdminStudents()"></select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label>Ավելացնել Ուսանող:</label>
                             <input type="text" id="admin-new-student-name" class="form-control" placeholder="Ուսանողի ԱԱՀ">
                         </div>
@@ -163,19 +173,29 @@
         <div id="teacher-view">
             <div class="card card-custom p-3 mb-4 no-print">
                 <div class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">Ամսաթիվ:</label>
                         <input type="date" id="selected-date" class="form-control" onchange="loadJournalData()">
                     </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Ուս. Տարի (Կուրս):</label>
+                        <select id="selected-year" class="form-select" onchange="filterCoursesByYear()">
+                            <option value="all">Բոլորը</option>
+                            <option value="1">1-ին կուրս</option>
+                            <option value="2">2-րդ կուրս</option>
+                            <option value="3">3-րդ կուրս</option>
+                            <option value="4">4-րդ կուրս</option>
+                        </select>
+                    </div>
                     <div class="col-md-3">
-                        <label class="form-label">Ընտրել Կուրսը:</label>
+                        <label class="form-label">Ընտրել Խումբը:</label>
                         <select id="selected-course" class="form-select" onchange="loadJournalData()"></select>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Ընտրել Առարկան:</label>
                         <select id="selected-subject" class="form-select" onchange="loadJournalData()"></select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label">Դասերի Զույգը:</label>
                         <select id="selected-lessons" class="form-select" onchange="loadJournalData()">
                             <option value="1-2">1-ին և 2-րդ դաս</option>
@@ -212,10 +232,18 @@
             <div class="card card-custom p-3 mb-4 bg-primary text-white no-print">
                 <div class="row align-items-center">
                     <div class="col-md-4">
-                        <h5 class="m-0">  Կուրսղեկի Վահանակ</h5>
+                        <h5 class="m-0">📋 Կուրսղեկի Վահանակ</h5>
                     </div>
                     <div class="col-md-8 d-flex align-items-center gap-2 justify-content-end">
-                        <label class="fw-bold mb-0">Ընտրել Կուրսը:</label>
+                        <label class="fw-bold mb-0">Կուրս:</label>
+                        <select id="kursghek-year-select" class="form-select w-auto" onchange="filterKursghekCoursesByYear()">
+                            <option value="all">Բոլորը</option>
+                            <option value="1">1-ին կուրս</option>
+                            <option value="2">2-րդ կուրս</option>
+                            <option value="3">3-րդ կուրս</option>
+                            <option value="4">4-րդ կուրս</option>
+                        </select>
+                        <label class="fw-bold mb-0 ms-2">Խումբ:</label>
                         <select id="kursghek-active-course-select" class="form-select w-auto" onchange="onKursghekCourseChange()"></select>
                     </div>
                 </div>
@@ -491,17 +519,13 @@
         const cRes = await fetch('/api/courses');
         allCoursesList = await cRes.json();
         
-        const cSel = document.getElementById('selected-course');
         const admCR = document.getElementById('admin-course-rename-list');
-        const admCS = document.getElementById('admin-student-course-select');
         const admTCBoxes = document.getElementById('adm-t-courses-checkboxes');
 
-        cSel.innerHTML = ''; admCR.innerHTML = ''; admCS.innerHTML = ''; admTCBoxes.innerHTML = '';
+        admCR.innerHTML = ''; admTCBoxes.innerHTML = '';
 
         allCoursesList.forEach(c => {
-            cSel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
             admCR.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-            admCS.innerHTML += `<option value="${c.id}">${c.name}</option>`;
             
             // Чекбоксы при создании учителя
             admTCBoxes.innerHTML += `
@@ -511,6 +535,9 @@
                 </div>
             `;
         });
+
+        filterCoursesByYear();
+        filterAdminCoursesByYear();
 
         const sSel = document.getElementById('selected-subject');
         sSel.innerHTML = '';
@@ -527,6 +554,40 @@
                 sSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
             });
         }
+
+        loadAdminStudents();
+    }
+
+    function filterCoursesByYear() {
+        const selectedYear = document.getElementById('selected-year').value;
+        const cSel = document.getElementById('selected-course');
+        cSel.innerHTML = '';
+
+        const filtered = allCoursesList.filter(c => {
+            if (selectedYear === 'all') return true;
+            return c.name.includes(selectedYear);
+        });
+
+        filtered.forEach(c => {
+            cSel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+        });
+
+        loadJournalData();
+    }
+
+    function filterAdminCoursesByYear() {
+        const selectedYear = document.getElementById('admin-student-year-filter').value;
+        const admCS = document.getElementById('admin-student-course-select');
+        admCS.innerHTML = '';
+
+        const filtered = allCoursesList.filter(c => {
+            if (selectedYear === 'all') return true;
+            return c.name.includes(selectedYear);
+        });
+
+        filtered.forEach(c => {
+            admCS.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+        });
 
         loadAdminStudents();
     }
@@ -549,7 +610,10 @@
         const subjectId = document.getElementById('selected-subject').value;
         const lessons = document.getElementById('selected-lessons').value.split('-');
 
-        if (!courseId) return;
+        if (!courseId) {
+            document.getElementById('students-table-body').innerHTML = '';
+            return;
+        }
 
         document.getElementById('th-l1').innerText = `Դաս ${lessons[0]}`;
         document.getElementById('th-l2').innerText = lessons[1] ? `Դաս ${lessons[1]}` : '-';
@@ -612,6 +676,11 @@
     }
 
     function setupKursghekCoursesDropdown() {
+        filterKursghekCoursesByYear();
+    }
+
+    function filterKursghekCoursesByYear() {
+        const selectedYear = document.getElementById('kursghek-year-select').value;
         const sel = document.getElementById('kursghek-active-course-select');
         sel.innerHTML = '';
 
@@ -620,7 +689,12 @@
             userCourses = allCoursesList;
         }
 
-        userCourses.forEach(c => {
+        const filtered = userCourses.filter(c => {
+            if (selectedYear === 'all') return true;
+            return c.name.includes(selectedYear);
+        });
+
+        filtered.forEach(c => {
             sel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
         });
 
@@ -634,13 +708,14 @@
 
     async function loadKursghekStudentsList() {
         const courseId = document.getElementById('kursghek-active-course-select').value;
+        const sel = document.getElementById('kursghek-student-select');
+        sel.innerHTML = '<option value="">-- Ընտրեք ուսանողին --</option>';
+
         if (!courseId) return;
 
         const stRes = await fetch(`/api/courses/${courseId}/students`);
         const students = await stRes.json();
 
-        const sel = document.getElementById('kursghek-student-select');
-        sel.innerHTML = '<option value="">-- Ընտրեք ուսանողին --</option>';
         students.forEach(st => {
             sel.innerHTML += `<option value="${st.id}">${st.full_name}</option>`;
         });
@@ -741,7 +816,12 @@
 
     async function loadKursghekFullTable() {
         const courseId = document.getElementById('kursghek-active-course-select').value;
-        if (!courseId) return;
+        const tbody = document.getElementById('kursghek-table-body');
+        
+        if (!courseId) {
+            tbody.innerHTML = '';
+            return;
+        }
 
         const date = document.getElementById('kursghek-date').value;
 
@@ -751,7 +831,6 @@
         const grRes = await fetch(`/api/grades?course_id=${courseId}&date=${date}`);
         const grades = await grRes.json();
 
-        const tbody = document.getElementById('kursghek-table-body');
         tbody.innerHTML = '';
 
         students.forEach((st, idx) => {
@@ -778,10 +857,11 @@
 
     function downloadExcel() {
         const cId = document.getElementById('kursghek-active-course-select').value;
+        if (!cId) return alert('Խնդրում ենք ընտրել կուրսը');
         window.location.href = `/api/kursghek/export-excel?course_id=${cId}`;
     }
 
-    // АԴՄԻՆ ՖՈՒՆԿՑԻԱՆԵՐ
+    // ԱԴՄԻՆ ՖՈՒՆԿՑԻԱՆԵՐ
     async function loadAdminTeachers() {
         const res = await fetch('/api/teachers');
         const teachers = await res.json();
@@ -935,10 +1015,16 @@
 
     async function loadAdminStudents() {
         const courseId = document.getElementById('admin-student-course-select').value;
-        if (!courseId) return;
+        const tbody = document.getElementById('admin-students-table');
+        
+        if (!courseId) {
+            tbody.innerHTML = '';
+            return;
+        }
+
         const res = await fetch(`/api/courses/${courseId}/students`);
         const students = await res.json();
-        const tbody = document.getElementById('admin-students-table');
+        
         tbody.innerHTML = '';
         students.forEach(s => {
             tbody.innerHTML += `
@@ -954,7 +1040,8 @@
     async function addStudent() {
         const courseId = document.getElementById('admin-student-course-select').value;
         const name = document.getElementById('admin-new-student-name').value;
-        if (!name) return;
+        if (!name || !courseId) return alert('Լրացրեք անունը և ընտրեք կուրսը');
+        
         await fetch('/api/admin/add-student', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
