@@ -1,7 +1,7 @@
 import os
-    from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Table, text
-    from sqlalchemy.ext.declarative import declarative_base
-    from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Table, text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
     
     DATABASE_URL = os.environ.get("DATABASE_URL")
     
