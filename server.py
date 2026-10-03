@@ -1,3 +1,4 @@
+from database import SessionLocal, init_db, User, Course, Subject, Student, Grade, LessonTopic
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, StreamingResponse
