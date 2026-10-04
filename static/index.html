@@ -33,7 +33,7 @@
                 <h4 class="text-center mb-4">Մուտք Համակարգ</h4>
                 <div class="mb-3">
                     <label class="form-label">Օգտանուն</label>
-                    <input type="text" id="login-username" class="form-control" placeholder="admin / teacher1">
+                    <input type="text" id="login-username" class="form-control" placeholder="Օգտանուն">
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Գաղտնաբառ</label>
@@ -63,7 +63,7 @@
 
         <!-- ԱԴՄԻՆ ՊԱՆԵԼ -->
         <div id="admin-panel" class="card card-custom p-4 mb-4 no-print" style="display: none;">
-            <h5 class="text-danger mb-3">⚙️ Ադմինիստրատորի Պանել (Լրիվ Վերահսկողություն)</h5>
+            <h5 class="text-danger mb-3">⚙️ Ադմինիստրատորի Պանել</h5>
             
             <ul class="nav nav-tabs mb-3" id="adminTab" role="tablist">
                 <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-teachers">Դասախոսներ և Առարկաներ</button></li>
@@ -79,7 +79,7 @@
                     <div class="row g-3 mb-4 border-bottom pb-3">
                         <h6>Ավելացնել Նոր Դասախոս</h6>
                         <div class="col-md-3">
-                            <input type="text" id="adm-t-user" class="form-control mb-2" placeholder="Օգտանուն (Login)">
+                            <input type="text" id="adm-t-user" class="form-control mb-2" placeholder="Օգտանուն">
                             <input type="password" id="adm-t-pass" class="form-control" placeholder="Գաղտնաբառ">
                         </div>
                         <div class="col-md-3">
@@ -90,7 +90,7 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small m-0 fw-bold">Ընտրել Կուրսեր (Գալոչկաներով):</label>
+                            <label class="form-label small m-0 fw-bold">Ընտրել Կուրսեր:</label>
                             <div id="adm-t-courses-checkboxes" class="checkbox-container"></div>
                         </div>
                         <div class="col-md-2 d-flex align-items-end">
@@ -113,7 +113,7 @@
                         <div class="col-md-6">
                             <h6>Ավելացնել Նոր Կուրս</h6>
                             <div class="input-group mb-2">
-                                <input type="text" id="admin-new-course-name" class="form-control" placeholder="Կուրսի անուն (օր. ՀԾ 1)">
+                                <input type="text" id="admin-new-course-name" class="form-control" placeholder="Կուրսի անուն">
                                 <button onclick="createCourse()" class="btn btn-success">+</button>
                             </div>
                         </div>
@@ -129,21 +129,11 @@
                 <!-- Управление Студентами -->
                 <div class="tab-pane fade" id="tab-students">
                     <div class="row g-3 mb-3">
-                        <div class="col-md-3">
-                            <label>Ուսուցման Տարի (Կուրս):</label>
-                            <select id="admin-student-year-filter" class="form-select" onchange="filterAdminCoursesByYear()">
-                                <option value="all">Բոլոր կուրսերը</option>
-                                <option value="1">1-ին կուրս</option>
-                                <option value="2">2-րդ կուրս</option>
-                                <option value="3">3-րդ կուրս</option>
-                                <option value="4">4-րդ կուրս</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label>Ընտրել Խումբը:</label>
+                        <div class="col-md-4">
+                            <label>Ընտրել Կուրսը:</label>
                             <select id="admin-student-course-select" class="form-select" onchange="loadAdminStudents()"></select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label>Ավելացնել Ուսանող:</label>
                             <input type="text" id="admin-new-student-name" class="form-control" placeholder="Ուսանողի ԱԱՀ">
                         </div>
@@ -173,29 +163,19 @@
         <div id="teacher-view">
             <div class="card card-custom p-3 mb-4 no-print">
                 <div class="row g-3">
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <label class="form-label">Ամսաթիվ:</label>
                         <input type="date" id="selected-date" class="form-control" onchange="loadJournalData()">
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Ուս. Տարի (Կուրս):</label>
-                        <select id="selected-year" class="form-select" onchange="filterCoursesByYear()">
-                            <option value="all">Բոլորը</option>
-                            <option value="1">1-ին կուրս</option>
-                            <option value="2">2-րդ կուրս</option>
-                            <option value="3">3-րդ կուրս</option>
-                            <option value="4">4-րդ կուրս</option>
-                        </select>
-                    </div>
                     <div class="col-md-3">
-                        <label class="form-label">Ընտրել Խումբը:</label>
+                        <label class="form-label">Ընտրել Կուրսը:</label>
                         <select id="selected-course" class="form-select" onchange="loadJournalData()"></select>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Ընտրել Առարկան:</label>
                         <select id="selected-subject" class="form-select" onchange="loadJournalData()"></select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <label class="form-label">Դասերի Զույգը:</label>
                         <select id="selected-lessons" class="form-select" onchange="loadJournalData()">
                             <option value="1-2">1-ին և 2-րդ դաս</option>
@@ -205,11 +185,15 @@
                         </select>
                     </div>
                 </div>
-                <!-- Поле ввода темы урока -->
+                <!-- Поля ввода темы уроков (Два поля для двух уроков) -->
                 <div class="row g-3 mt-1">
-                    <div class="col-12">
-                        <label class="form-label fw-bold text-primary">📝 Դասի Թեմա (Тема урока):</label>
-                        <input type="text" id="lesson-topic" class="form-control" placeholder="Մուտքագրեք այսօրվա դասի թեման...">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-primary" id="lbl-topic-1">📝 1-ին դասի թեմա:</label>
+                        <input type="text" id="lesson-topic-1" class="form-control" placeholder="Մուտքագրեք թեման...">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-primary" id="lbl-topic-2">📝 2-րդ դասի թեմա:</label>
+                        <input type="text" id="lesson-topic-2" class="form-control" placeholder="Մուտքագրեք թեման...">
                     </div>
                 </div>
             </div>
@@ -235,22 +219,14 @@
         <!-- РЕЖИМ 2: Режим Куратора -->
         <div id="kursghek-view" style="display: none;">
             
-            <!-- Переключатель Курсов Куратора -->
+            <!-- Панель выбора Куратора -->
             <div class="card card-custom p-3 mb-4 bg-primary text-white no-print">
                 <div class="row align-items-center">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <h5 class="m-0">📋 Կուրսղեկի Վահանակ</h5>
                     </div>
-                    <div class="col-md-8 d-flex align-items-center gap-2 justify-content-end">
+                    <div class="col-md-6 d-flex align-items-center gap-2 justify-content-end">
                         <label class="fw-bold mb-0">Կուրս:</label>
-                        <select id="kursghek-year-select" class="form-select w-auto" onchange="filterKursghekCoursesByYear()">
-                            <option value="all">Բոլորը</option>
-                            <option value="1">1-ին կուրս</option>
-                            <option value="2">2-րդ կուրս</option>
-                            <option value="3">3-րդ կուրս</option>
-                            <option value="4">4-րդ կուրս</option>
-                        </select>
-                        <label class="fw-bold mb-0 ms-2">Խումբ:</label>
                         <select id="kursghek-active-course-select" class="form-select w-auto" onchange="onKursghekCourseChange()"></select>
                     </div>
                 </div>
@@ -269,7 +245,7 @@
                     </div>
                     <div class="col-md-6 d-flex align-items-end">
                         <button onclick="openFullGradesModal()" class="btn btn-primary btn-lg w-100">
-                            📋 Ընդհանուր Գնահատականներ (Առանձին Աղյուսակ)
+                            📋 Ընդհանուր Գնահատականներ
                         </button>
                     </div>
                 </div>
@@ -278,10 +254,10 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <div class="stat-card">
-                                <h6 class="text-muted mb-2">Բացակայություններ (Пропуски)</h6>
+                                <h6 class="text-muted mb-2">Բացակայություններ</h6>
                                 <div class="d-flex gap-4 fs-5">
                                     <div><strong>Անհարգելի (Բ):</strong> <span id="stat-b-count" class="badge bg-danger">0</span></div>
-                                    <div><strong>Հարգելի (Հ):</strong> <span id="stat-h-count" class="badge bg-warning text-dark">0</span></div>
+                                    <div><strong>Հարգելի (Հ/Բ):</strong> <span id="stat-h-count" class="badge bg-warning text-dark">0</span></div>
                                 </div>
                             </div>
                         </div>
@@ -293,7 +269,7 @@
                         </div>
                     </div>
 
-                    <h6 class="fw-bold mt-3 mb-2">Վերջին Գնահատականների Ժամանակագրություն (Սկրոլ):</h6>
+                    <h6 class="fw-bold mt-3 mb-2">Վերջին Գնահատականների Ժամանակագրություն:</h6>
                     <div id="student-scroll-feed" class="scroll-feed list-group"></div>
                 </div>
             </div>
@@ -361,11 +337,11 @@
                 <input type="text" id="edit-t-name" class="form-control">
             </div>
             <div class="col-md-6">
-                <label class="form-label fw-bold">Օգտանուն (Login):</label>
+                <label class="form-label fw-bold">Օգտանուն:</label>
                 <input type="text" id="edit-t-user" class="form-control">
             </div>
             <div class="col-md-6">
-                <label class="form-label fw-bold">Նոր Գաղտնաբառ (թողնել դատարկ եթե չեք փոխում):</label>
+                <label class="form-label fw-bold">Նոր Գաղտնաբառ:</label>
                 <input type="password" id="edit-t-pass" class="form-control" placeholder="••••••••">
             </div>
             <div class="col-md-6">
@@ -379,11 +355,11 @@
 
         <div class="row g-3">
             <div class="col-md-6">
-                <label class="form-label fw-bold">Կուրսղեկի Կուրսերը (Գալոչկաներով):</label>
+                <label class="form-label fw-bold">Կուրսղեկի Կուրսերը:</label>
                 <div id="edit-t-courses-checkboxes" class="checkbox-container"></div>
             </div>
             <div class="col-md-6">
-                <label class="form-label fw-bold">Դասավանդվող Առարկաները (Գալոչկաներով):</label>
+                <label class="form-label fw-bold">Դասավանդվող Առարկաները:</label>
                 <div id="edit-t-subjects-checkboxes" class="checkbox-container"></div>
             </div>
         </div>
@@ -443,10 +419,9 @@
             <button class="btn btn-outline-primary" onclick="setGrade('9')">9</button>
             <button class="btn btn-primary" onclick="setGrade('10')">10</button>
             <button class="btn btn-danger" onclick="setGrade('Բ')">Բ</button>
-            <button class="btn btn-warning" onclick="setGrade('Հ')">Հ</button>
+            <button class="btn btn-warning" onclick="setGrade('Հ/Բ')">Հ/Բ</button>
             <button class="btn btn-info" onclick="setGrade('Ն')">Ն</button>
         </div>
-        <!-- Кнопка удаления/очистки оценки -->
         <button class="btn btn-outline-danger w-100 fw-bold" onclick="setGrade('-')">❌ Ջնջել Գնահատականը</button>
       </div>
     </div>
@@ -531,11 +506,13 @@
         
         const admCR = document.getElementById('admin-course-rename-list');
         const admTCBoxes = document.getElementById('adm-t-courses-checkboxes');
+        const cSel = document.getElementById('selected-course');
 
-        admCR.innerHTML = ''; admTCBoxes.innerHTML = '';
+        admCR.innerHTML = ''; admTCBoxes.innerHTML = ''; cSel.innerHTML = '';
 
         allCoursesList.forEach(c => {
             admCR.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+            cSel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
             
             admTCBoxes.innerHTML += `
                 <div class="form-check">
@@ -545,8 +522,7 @@
             `;
         });
 
-        filterCoursesByYear();
-        filterAdminCoursesByYear();
+        loadAdminStudentsListSelect();
 
         const sSel = document.getElementById('selected-subject');
         sSel.innerHTML = '';
@@ -567,37 +543,12 @@
         loadAdminStudents();
     }
 
-    function filterCoursesByYear() {
-        const selectedYear = document.getElementById('selected-year').value;
-        const cSel = document.getElementById('selected-course');
-        cSel.innerHTML = '';
-
-        const filtered = allCoursesList.filter(c => {
-            if (selectedYear === 'all') return true;
-            return c.name.includes(selectedYear);
-        });
-
-        filtered.forEach(c => {
-            cSel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-        });
-
-        loadJournalData();
-    }
-
-    function filterAdminCoursesByYear() {
-        const selectedYear = document.getElementById('admin-student-year-filter').value;
+    function loadAdminStudentsListSelect() {
         const admCS = document.getElementById('admin-student-course-select');
         admCS.innerHTML = '';
-
-        const filtered = allCoursesList.filter(c => {
-            if (selectedYear === 'all') return true;
-            return c.name.includes(selectedYear);
-        });
-
-        filtered.forEach(c => {
+        allCoursesList.forEach(c => {
             admCS.innerHTML += `<option value="${c.id}">${c.name}</option>`;
         });
-
         loadAdminStudents();
     }
 
@@ -626,6 +577,9 @@
 
         document.getElementById('th-l1').innerText = `Դաս ${lessons[0]}`;
         document.getElementById('th-l2').innerText = lessons[1] ? `Դաս ${lessons[1]}` : '-';
+        
+        document.getElementById('lbl-topic-1').innerText = `📝 ${lessons[0]}-ին դասի թեմա:`;
+        document.getElementById('lbl-topic-2').innerText = lessons[1] ? `📝 ${lessons[1]}-րդ դասի թեմա:` : '📝 Դասի թեմա:';
 
         const stRes = await fetch(`/api/courses/${courseId}/students`);
         const students = await stRes.json();
@@ -636,12 +590,12 @@
         const tbody = document.getElementById('students-table-body');
         tbody.innerHTML = '';
 
-        // Загрузка сохраненной темы урока
-        if (grades.length > 0 && grades[0].topic) {
-            document.getElementById('lesson-topic').value = grades[0].topic;
-        } else {
-            document.getElementById('lesson-topic').value = '';
-        }
+        // Загрузка тем для двух уроков
+        const gradeL1 = grades.find(g => g.lesson_number == lessons[0]);
+        const gradeL2 = lessons[1] ? grades.find(g => g.lesson_number == lessons[1]) : null;
+
+        document.getElementById('lesson-topic-1').value = gradeL1 && gradeL1.topic ? gradeL1.topic : '';
+        document.getElementById('lesson-topic-2').value = gradeL2 && gradeL2.topic ? gradeL2.topic : '';
 
         students.forEach((st, idx) => {
             const g1 = grades.find(g => g.student_id === st.id && g.lesson_number == lessons[0])?.grade_value || '-';
@@ -663,15 +617,21 @@
         const date = document.getElementById('selected-date').value;
         const subjectId = document.getElementById('selected-subject').value;
         const lessons = document.getElementById('selected-lessons').value.split('-');
-        const topic = document.getElementById('lesson-topic').value;
+        
+        const topic1 = document.getElementById('lesson-topic-1').value;
+        const topic2 = document.getElementById('lesson-topic-2').value;
 
         const stRes = await fetch(`/api/courses/${courseId}/students`);
         const students = await stRes.json();
 
         for (let st of students) {
-            for (let l of lessons) {
+            for (let idx = 0; idx < lessons.length; idx++) {
+                const l = lessons[idx];
                 if (!l) continue;
+                
                 const elem = document.getElementById(`g-${st.id}-${l}`);
+                const currentTopic = (idx === 0) ? topic1 : topic2;
+
                 if (elem) {
                     await fetch('/api/grades', {
                         method: 'POST',
@@ -683,7 +643,7 @@
                             course_id: parseInt(courseId),
                             lesson_number: parseInt(l),
                             grade_value: elem.innerText,
-                            topic: topic,
+                            topic: currentTopic,
                             date: date
                         })
                     });
@@ -699,7 +659,6 @@
         await fetch(`/api/grades/${gradeId}`, { method: 'DELETE' });
         alert('Գնահատականը ջնջված է:');
         
-        // Перезагрузка текущих видов
         if (isKursghekMode) {
             await loadKursghekStudentsList();
             openFullGradesModal();
@@ -709,11 +668,6 @@
     }
 
     function setupKursghekCoursesDropdown() {
-        filterKursghekCoursesByYear();
-    }
-
-    function filterKursghekCoursesByYear() {
-        const selectedYear = document.getElementById('kursghek-year-select').value;
         const sel = document.getElementById('kursghek-active-course-select');
         sel.innerHTML = '';
 
@@ -722,12 +676,7 @@
             userCourses = allCoursesList;
         }
 
-        const filtered = userCourses.filter(c => {
-            if (selectedYear === 'all') return true;
-            return c.name.includes(selectedYear);
-        });
-
-        filtered.forEach(c => {
+        userCourses.forEach(c => {
             sel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
         });
 
@@ -773,7 +722,7 @@
         studentGrades.forEach(g => {
             const val = g.grade_value;
             if (val === 'Բ') bCount++;
-            else if (val === 'Հ') hCount++;
+            else if (val === 'Հ/Բ' || val === 'Հ') hCount++;
             else if (val !== '-') gradeCounts[val] = (gradeCounts[val] || 0) + 1;
         });
 
@@ -795,7 +744,7 @@
             studentGrades.forEach(g => {
                 let badgeClass = 'bg-primary';
                 if (g.grade_value === 'Բ') badgeClass = 'bg-danger';
-                if (g.grade_value === 'Հ') badgeClass = 'bg-warning text-dark';
+                if (g.grade_value === 'Հ/Բ' || g.grade_value === 'Հ') badgeClass = 'bg-warning text-dark';
 
                 feedDiv.innerHTML += `
                     <div class="list-group-item d-flex justify-content-between align-items-center">
@@ -832,7 +781,7 @@
                         <td><strong>${row.subject_name || 'Առարկա'}</strong></td>
                         <td>${row.date}</td>
                         <td>Դաս ${row.lesson_number}</td>
-                        <td><span class="badge ${row.grade_value === 'Բ' ? 'bg-danger' : 'bg-primary'} fs-6">${row.grade_value}</span></td>
+                        <td><span class="badge ${row.grade_value === 'Բ' ? 'bg-danger' : (row.grade_value === 'Հ/Բ' || row.grade_value === 'Հ' ? 'bg-warning text-dark' : 'bg-primary')} fs-6">${row.grade_value}</span></td>
                         <td>${row.teacher_name || '-'}</td>
                         <td class="text-center">
                             <button onclick="deleteGradeById(${row.id})" class="btn btn-sm btn-outline-danger" title="Ջնջել">❌</button>
@@ -880,7 +829,7 @@
                 
                 let badgeClass = 'bg-light text-dark border';
                 if (val === 'Բ') badgeClass = 'bg-danger text-white';
-                else if (val === 'Հ') badgeClass = 'bg-warning text-dark';
+                else if (val === 'Հ/Բ' || val === 'Հ') badgeClass = 'bg-warning text-dark';
                 else if (val !== '-') badgeClass = 'bg-primary text-white';
 
                 rowHtml += `<td><span class="badge ${badgeClass} p-2 px-3 fs-6">${val}</span></td>`;
