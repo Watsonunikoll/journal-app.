@@ -422,7 +422,7 @@
             <button class="btn btn-warning" onclick="setGrade('Հ/Բ')">Հ/Բ</button>
             <button class="btn btn-info" onclick="setGrade('Ն')">Ն</button>
         </div>
-        <button class="btn btn-outline-danger w-100 fw-bold" onclick="setGrade('-')">❌ Ջնջել Գնահատականը</button>
+        <button class="btn btn-outline-danger w-100 fw-bold" onclick="setGrade('-')">❌ Ջնջել </button>
       </div>
     </div>
   </div>
@@ -722,7 +722,7 @@
         studentGrades.forEach(g => {
             const val = g.grade_value;
             if (val === 'Բ') bCount++;
-            else if (val === 'Հ/Բ' || val === 'Հ') hCount++;
+            else if (val === 'հ/բ' || val === 'Հ') hCount++;
             else if (val !== '-') gradeCounts[val] = (gradeCounts[val] || 0) + 1;
         });
 
