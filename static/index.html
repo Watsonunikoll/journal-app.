@@ -150,31 +150,33 @@
                 </div>
 
                 <!-- Управление Предметами -->
-               <div class="tab-pane fade" id="tab-subjects">
-    <div class="row g-3 mb-3">
-        <div class="col-md-6">
-            <h6>Ավելացնել Նոր Առարկա</h6>
-            <div class="input-group">
-                <input type="text" id="admin-new-subject" class="form-control" placeholder="Առարկայի անունը">
-                <button onclick="addSubject()" class="btn btn-success">+</button>
+                <div class="tab-pane fade" id="tab-subjects">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <h6>Ավելացնել Նոր Առարկա</h6>
+                            <div class="input-group">
+                                <input type="text" id="admin-new-subject" class="form-control" placeholder="Առարկայի անունը">
+                                <button onclick="addSubject()" class="btn btn-success">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h6>Գոյություն ունեցող Առարկաներ</h6>
+                    <div style="max-height: 300px; overflow-y: auto;" class="col-md-8">
+                        <table class="table table-sm table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 60px;">ID</th>
+                                    <th>Առարկայի Անվանում</th>
+                                    <th style="width: 100px;">Գործողություն</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-subjects-table"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    
-    <h6>Գոյություն ունեցող Առարկաներ</h6>
-    <div style="max-height: 300px; overflow-y: auto;" class="col-md-8">
-        <table class="table table-sm table-bordered align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th style="width: 60px;">ID</th>
-                    <th>Առարկայի Անվանում</th>
-                    <th style="width: 100px;">Գործողություն</th>
-                </tr>
-            </thead>
-            <tbody id="admin-subjects-table"></tbody>
-        </table>
-    </div>
-</div>
 
         <!-- РЕЖИМ 1: Обычный Журнал Учителя -->
         <div id="teacher-view">
@@ -202,7 +204,7 @@
                         </select>
                     </div>
                 </div>
-                <!-- Поля ввода темы уроков (Два поля для двух уроков) -->
+                <!-- Поля ввода темы уроков -->
                 <div class="row g-3 mt-1">
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-primary" id="lbl-topic-1">📝 1-ին դասի թեմա:</label>
@@ -236,7 +238,6 @@
         <!-- РЕЖИМ 2: Режим Куратора -->
         <div id="kursghek-view" style="display: none;">
             
-            <!-- Панель выбора Куратора -->
             <div class="card card-custom p-3 mb-4 bg-primary text-white no-print">
                 <div class="row align-items-center">
                     <div class="col-md-6">
@@ -249,7 +250,6 @@
                 </div>
             </div>
 
-            <!-- Персональный анализ конкретного студента -->
             <div class="card card-custom p-4 mb-4 border-primary">
                 <h5 class="text-primary mb-3">👤 Ուսանողի Անհատական Վերլուծություն</h5>
                 
@@ -291,7 +291,6 @@
                 </div>
             </div>
 
-            <!-- Сводный журнал -->
             <div class="card card-custom p-4 mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-4 no-print">
                     <h4 class="m-0 text-primary">Կուրսի Ընդհանուր Մատյան</h4>
@@ -436,10 +435,10 @@
             <button class="btn btn-outline-primary" onclick="setGrade('9')">9</button>
             <button class="btn btn-primary" onclick="setGrade('10')">10</button>
             <button class="btn btn-danger" onclick="setGrade('Բ')">Բ</button>
-            <button class="btn btn-warning" onclick="setGrade('Հ/Բ')">հ/բ</button>
+            <button class="btn btn-warning" onclick="setGrade('Հ/Բ')">Հ/Բ</button>
             <button class="btn btn-info" onclick="setGrade('Ն')">Ն</button>
         </div>
-        <button class="btn btn-outline-danger w-100 fw-bold" onclick="setGrade('-')">❌ Ջնջել </button>
+        <button class="btn btn-outline-danger w-100 fw-bold" onclick="setGrade('-')">❌ Ջնջել Գնահատականը</button>
       </div>
     </div>
   </div>
@@ -487,6 +486,7 @@
         if (currentUser.role === 'admin') {
             document.getElementById('admin-panel').style.display = 'block';
             loadAdminTeachers();
+            loadAdminSubjects();
         }
 
         if (currentUser.is_kursghek || currentUser.role === 'admin') {
@@ -607,7 +607,6 @@
         const tbody = document.getElementById('students-table-body');
         tbody.innerHTML = '';
 
-        // Загрузка тем для двух уроков
         const gradeL1 = grades.find(g => g.lesson_number == lessons[0]);
         const gradeL2 = lessons[1] ? grades.find(g => g.lesson_number == lessons[1]) : null;
 
@@ -739,7 +738,7 @@
         studentGrades.forEach(g => {
             const val = g.grade_value;
             if (val === 'Բ') bCount++;
-            else if (val === 'հ/բ' || val === 'Հ') hCount++;
+            else if (val === 'Հ/Բ' || val === 'Հ') hCount++;
             else if (val !== '-') gradeCounts[val] = (gradeCounts[val] || 0) + 1;
         });
 
@@ -879,6 +878,27 @@
                     <td class="d-flex gap-1">
                         <button onclick="openEditTeacherModal(${t.id})" class="btn btn-warning btn-sm">✏️ Խմբագրել</button>
                         <button onclick="deleteTeacher(${t.id})" class="btn btn-danger btn-sm">Ջնջել</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    async function loadAdminSubjects() {
+        const res = await fetch('/api/subjects');
+        allSubjectsList = await res.json();
+        
+        const tbody = document.getElementById('admin-subjects-table');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+        allSubjectsList.forEach(s => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${s.id}</td>
+                    <td><strong>${s.name}</strong></td>
+                    <td>
+                        <button onclick="deleteSubject(${s.id})" class="btn btn-danger btn-sm">Ջնջել</button>
                     </td>
                 </tr>
             `;
@@ -1057,11 +1077,28 @@
     }
 
     async function addSubject() {
-        const name = document.getElementById('admin-new-subject').value;
-        if (!name) return;
+        const name = document.getElementById('admin-new-subject').value.trim();
+        if (!name) return alert('Մուտքագրեք առարկայի անունը');
+        
         await fetch(`/api/admin/add-subject?name=${encodeURIComponent(name)}`, {method: 'POST'});
         alert('Առարկան ավելացված է:');
         document.getElementById('admin-new-subject').value = '';
+        
+        loadCoursesAndSubjects();
+        loadAdminSubjects();
+    }
+
+    async function deleteSubject(id) {
+        if (!confirm('Վստա՞հ եք, որ ցանկանում եք ջնջել այս առարկան:')) return;
+        
+        const res = await fetch(`/api/admin/delete-subject/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            alert('Առարկան ջնջված է:');
+            loadCoursesAndSubjects();
+            loadAdminSubjects();
+        } else {
+            alert('Սխալ՝ առարկան ջնջելիս');
+        }
     }
 </script>
 </body>
