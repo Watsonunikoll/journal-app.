@@ -480,3 +480,13 @@ def delete_grade_admin(student_id: int, course_id: int, subject_id: int, lesson_
         db.delete(g)
         db.commit()
     return {"status": "success"}
+
+@app.delete("/api/admin/delete-subject/{subject_id}")
+def delete_subject(subject_id: int, db: Session = Depends(get_db)):
+    subj = db.query(Subject).filter(Subject.id == subject_id).first()
+    if not subj:
+        raise HTTPException(status_code=404, detail="Subject not found")
+    
+    db.delete(subj)
+    db.commit()
+    return {"status": "success"}
